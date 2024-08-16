@@ -1,0 +1,57 @@
+# Golang
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go workspace files
+go.work
+
+# Go modules
+/go/pkg/mod
+/go/pkg/sumdb
+
+# Log files
+*.log
+
+# Build directories
+/build/
+/dist/
+
+# Vendor directory (comment if you are using Go modules)
+vendor/
+
+# JetBrains IDEs
+.idea/
+*.iml
+out/
+.idea_modules/
+# Workspace.xml is often user-specific
+workspace.xml
+# Gradle specific (when using Kotlin, Java, or mixed projects)
+.gradle
+build/
+# Crashlytics (Android)
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# User-specific files
+*.suo
+*.ntvs*
+*.njsproj
+*.sln*
+*.sw?
+
+# Generated Go files
+*_test.go
+*_gen.go
+
+# Docker
+**/Dockerfile
+**/docker-compose.yaml
