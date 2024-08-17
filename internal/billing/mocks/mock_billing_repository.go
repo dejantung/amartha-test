@@ -42,12 +42,11 @@ func (m *MockBillingRepositoryProvider) EXPECT() *MockBillingRepositoryProviderM
 }
 
 // CreateCustomer mocks base method.
-func (m *MockBillingRepositoryProvider) CreateCustomer(arg0 context.Context, arg1 domain.Customer) (*domain.Customer, error) {
+func (m *MockBillingRepositoryProvider) CreateCustomer(arg0 context.Context, arg1 []domain.Customer) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateCustomer", arg0, arg1)
-	ret0, _ := ret[0].(*domain.Customer)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // CreateCustomer indicates an expected call of CreateCustomer.
