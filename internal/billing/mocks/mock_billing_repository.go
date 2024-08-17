@@ -101,6 +101,21 @@ func (mr *MockBillingRepositoryProviderMockRecorder) GetCustomer(arg0 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomer", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetCustomer), arg0)
 }
 
+// GetCustomerByID mocks base method.
+func (m *MockBillingRepositoryProvider) GetCustomerByID(arg0 context.Context, arg1 uuid.UUID) (*domain.Customer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCustomerByID", arg0, arg1)
+	ret0, _ := ret[0].(*domain.Customer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCustomerByID indicates an expected call of GetCustomerByID.
+func (mr *MockBillingRepositoryProviderMockRecorder) GetCustomerByID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomerByID", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetCustomerByID), arg0, arg1)
+}
+
 // GetLatestLoan mocks base method.
 func (m *MockBillingRepositoryProvider) GetLatestLoan(arg0 context.Context, arg1 uuid.UUID) (*domain.Loan, error) {
 	m.ctrl.T.Helper()
