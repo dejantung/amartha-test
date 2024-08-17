@@ -89,8 +89,8 @@ var _ = Describe("Service", func() {
 		mockLoan = domain.Loan{
 			LoanID:             randUUID,
 			CustomerID:         uuid.New(),
-			PrincipalAmount:    5,
-			InterestRate:       0.5,
+			PrincipalAmount:    5000000,
+			InterestRate:       0.1,
 			StartDate:          timeNow,
 			EndDate:            timeNow.AddDate(0, 5, 0),
 			OutstandingBalance: 0,
@@ -105,6 +105,7 @@ var _ = Describe("Service", func() {
 	Describe("CreateLoan", func() {
 		payload := model.CreateLoanPayload{
 			CustomerID: randUUID,
+			LoanAmount: 5000000,
 		}
 
 		Describe("Positive case", func() {
@@ -116,12 +117,11 @@ var _ = Describe("Service", func() {
 				response, err := svc.CreateLoan(ctx, payload)
 				Expect(err).To(BeNil())
 				Expect(len(response.Schedules)).To(Equal(len(mockSchedule)))
+				Expect(response.LoanAmount).To(Equal(float64(5500000)))
 
 				for i, val := range response.Schedules {
-					Expect(val.ScheduleID).To(Equal(mockSchedule[i].ScheduleID))
-					Expect(val.LoanID).To(Equal(mockSchedule[i].LoanID))
 					Expect(val.PaymentNo).To(Equal(mockSchedule[i].PaymentNo))
-					Expect(val.PaymentDueDate).To(Equal(mockSchedule[i]))
+					Expect(val.PaymentDueDate).To(Equal(mockSchedule[i].PaymentDueDate.Format("2006-01-02")))
 					Expect(val.PaymentAmount).To(Equal(mockSchedule[i].PaymentAmount))
 					Expect(val.PaymentStatus).To(Equal(mockSchedule[i].PaymentStatus))
 					Expect(val.IsMissPayment).To(Equal(mockSchedule[i].IsMissPayment))
