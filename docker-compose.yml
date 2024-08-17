@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: wurstmeister/kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_CREATE_TOPICS: "payment-topic:2:1,loan-topic:2:1"
+    depends_on:
+      - zookeeper
+
+  postgres:
+    image: postgres:13
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: AdminPassword123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/config.yml
+    volumes:
+      - ./deploy/loki/config.yml:/etc/loki/config.yml
+
+  grafana:
+    image: grafana/grafana:8.2.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: AdminPassword123
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    depends_on:
+      - loki
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:v2.26.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/prometheus/config.yml:/etc/prometheus/prometheus.yml
+
+volumes:
+  postgres_data:
+  grafana-storage:
