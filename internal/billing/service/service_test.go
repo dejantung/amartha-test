@@ -1,10 +1,10 @@
-package service_test
+package service
 
 import (
+	"billing-engine/internal/billing/constant"
 	"billing-engine/internal/billing/domain"
 	"billing-engine/internal/billing/mocks"
 	"billing-engine/internal/billing/model"
-	"billing-engine/internal/billing/service"
 	apperror "billing-engine/pkg/customerror"
 	"billing-engine/pkg/enum"
 	"billing-engine/pkg/logger"
@@ -25,7 +25,7 @@ var timeNow = time.Now()
 var _ = Describe("Service", func() {
 	var (
 		mockCtrl     *gomock.Controller
-		svc          service.BillingServiceProvider
+		svc          *BillingService
 		repo         *mocks.MockBillingRepositoryProvider
 		log          logger.Logger
 		mockLoan     domain.Loan
@@ -36,7 +36,7 @@ var _ = Describe("Service", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		repo = mocks.NewMockBillingRepositoryProvider(mockCtrl)
 		log = logger.NewZeroLogger("test")
-		svc = service.NewBillingService(repo, log)
+		svc = NewBillingService(repo, log)
 
 		mockSchedule = []domain.Schedule{
 			{
@@ -152,6 +152,52 @@ var _ = Describe("Service", func() {
 				_, err := svc.CreateLoan(ctx, payload)
 				Expect(err).To(Equal(someErr))
 			})
+		})
+	})
+
+	Describe("SchemaMaker", func() {
+		It("should return correct total loan and schedule with even number in total amount", func() {
+			totalLoan, schedules := svc.paymentSchemaMaker(mockLoan)
+
+			Expect(totalLoan).To(Equal(float64(5500000)))
+			Expect(len(schedules)).To(Equal(constant.MAX_PAYMENT))
+
+			for i, val := range schedules {
+				Expect(val.PaymentNo).To(Equal(i + 1))
+				Expect(val.PaymentAmount).To(Equal(float64(110000)))
+				Expect(val.PaymentStatus).To(Equal(enum.PaymentStatusPending))
+				Expect(val.IsMissPayment).To(BeFalse())
+			}
+		})
+
+		It("should return correct total loan and schedule with odd number in total amount", func() {
+			mockLoan.PrincipalAmount = 5000001
+			totalLoan, schedules := svc.paymentSchemaMaker(mockLoan)
+
+			Expect(totalLoan).To(Equal(float64(5500001)))
+			Expect(len(schedules)).To(Equal(constant.MAX_PAYMENT))
+
+			for i, val := range schedules {
+				Expect(val.PaymentNo).To(Equal(i + 1))
+				Expect(val.PaymentAmount).To(Equal(float64(110000)))
+				Expect(val.PaymentStatus).To(Equal(enum.PaymentStatusPending))
+				Expect(val.IsMissPayment).To(BeFalse())
+			}
+		})
+
+		It("should return correct total loan and schedule with more weird odd number in total amount", func() {
+			mockLoan.PrincipalAmount = 1234569
+			totalLoan, schedules := svc.paymentSchemaMaker(mockLoan)
+
+			Expect(totalLoan).To(Equal(float64(1358026)))
+			Expect(len(schedules)).To(Equal(constant.MAX_PAYMENT))
+
+			for i, val := range schedules {
+				Expect(val.PaymentNo).To(Equal(i + 1))
+				Expect(val.PaymentAmount).To(Equal(float64(27161)))
+				Expect(val.PaymentStatus).To(Equal(enum.PaymentStatusPending))
+				Expect(val.IsMissPayment).To(BeFalse())
+			}
 		})
 	})
 })
