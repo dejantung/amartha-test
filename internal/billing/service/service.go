@@ -10,6 +10,7 @@ import (
 	"billing-engine/pkg/logger"
 	"context"
 	"math"
+	"strconv"
 	"time"
 )
 
@@ -22,7 +23,7 @@ type BillingServiceProvider interface {
 	// CreateCustomer NOTE: this method is out of context, so I will just merge it in the billing service
 	CreateCustomer(ctx context.Context, payload model.CreateCustomerPayload) (*model.GetCustomerResponse, error)
 	// GetCustomer NOTE: this method is out of context, so I will just merge it in the billing service
-	GetCustomer(ctx context.Context) (*model.GetCustomerResponse, error)
+	GetCustomer(ctx context.Context) ([]domain.Customer, error)
 }
 
 type BillingService struct {
@@ -133,13 +134,34 @@ func (b BillingService) GetOutstandingBalance(ctx context.Context, payload model
 }
 
 func (b BillingService) CreateCustomer(ctx context.Context, payload model.CreateCustomerPayload) (*model.GetCustomerResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	var customers []domain.Customer
+	for i := 0; i < payload.TotalCustomer; i++ {
+		customer := domain.Customer{
+			FirstName: "John",
+			LastName:  "Doe" + strconv.Itoa(i),
+			Email:     "john.doe" + strconv.Itoa(i) + "@example.com",
+		}
+
+		customers = append(customers, customer)
+	}
+
+	err := b.repo.CreateCustomer(ctx, customers)
+	if err != nil {
+		b.log.WithField("error", err.Error()).Error("[CreateCustomer] Unexpected error when creating customer")
+		return nil, err
+	}
+
+	return nil, nil
 }
 
-func (b BillingService) GetCustomer(ctx context.Context) (*model.GetCustomerResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (b BillingService) GetCustomer(ctx context.Context) ([]domain.Customer, error) {
+	customers, err := b.repo.GetCustomer(ctx)
+	if err != nil {
+		b.log.WithField("error", err.Error()).Error("[GetCustomer] Unexpected error when getting customer")
+		return nil, err
+	}
+
+	return customers, nil
 }
 
 func (b BillingService) MapScheduleResponse(schedule []domain.Schedule) []model.ScheduleResponse {
