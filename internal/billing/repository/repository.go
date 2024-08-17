@@ -17,4 +17,5 @@ type BillingRepositoryProvider interface {
 	CreateCustomer(ctx context.Context, request domain.Customer) (*domain.Customer, error)
 	// GetCustomer NOTE: this method is out of context, so I will just merge it in the billing service
 	GetCustomer(ctx context.Context) ([]domain.Customer, error)
+	GetCustomerByID(ctx context.Context, customerID uuid.UUID) (*domain.Customer, error)
 }
