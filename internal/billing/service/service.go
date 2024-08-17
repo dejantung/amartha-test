@@ -31,12 +31,16 @@ type BillingService struct {
 }
 
 func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoanPayload) (*model.CreateLoanResponse, error) {
+	b.log.WithField("customer_id", payload.CustomerID).Info("[CreateLoan] creating loan for customer")
 	customer, err := b.repo.GetCustomerByID(ctx, payload.CustomerID)
 	if err != nil {
+		b.log.WithField("customer_id", payload.CustomerID).
+			WithField("error", err.Error()).Error("[CreateLoan] Unexpected error when getting customer")
 		return nil, err
 	}
 
 	if customer == nil {
+		b.log.WithField("customer_id", payload.CustomerID).Error("[CreateLoan] customer not found")
 		return nil, apperror.New(apperror.NotFound, "customer not found")
 	}
 
@@ -53,12 +57,17 @@ func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoan
 	totalLoan, loanSchema := b.paymentSchemaMaker(loan)
 	loan.Schedules = loanSchema
 
+	b.log.WithField("customer_id", payload.CustomerID).Info("[CreateLoan] creating loan for customer")
 	newLoan, err := b.repo.CreateLoan(ctx, loan)
 	if err != nil {
+		b.log.WithField("customer_id", payload.CustomerID).
+			WithField("error", err.Error()).Error("[CreateLoan] Unexpected error when creating loan")
 		return nil, err
 	}
 
 	//TODO: add kafka producer here
+	b.log.WithField("customer_id", payload.CustomerID).
+		WithField("loan", loan).Info("[CreateLoan] loan created successfully")
 
 	return &model.CreateLoanResponse{
 		LoanID:     newLoan.LoanID,
