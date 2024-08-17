@@ -31,6 +31,11 @@ type GetScheduleResponse struct {
 	Schedules []ScheduleResponse `json:"schedules"`
 }
 
+type GetSchedulePayload struct {
+	LoanID     uuid.UUID `query:"loan_id"`
+	CustomerID uuid.UUID `query:"customer_id"`
+}
+
 type IsDelinquentPayload struct {
 	LoanID     uuid.UUID `query:"loan_id"`
 	CustomerID uuid.UUID `query:"customer_id"`
