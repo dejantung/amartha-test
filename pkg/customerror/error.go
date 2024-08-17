@@ -1,4 +1,4 @@
-package customerror
+package apperror
 
 import "fmt"
 
