@@ -22,6 +22,5 @@ type Loan struct {
 }
 
 func (loan *Loan) BeforeCreate(tx *gorm.DB) (err error) {
-	loan.LoanID = uuid.New()
 	return loan.AuditLog.BeforeCreate(tx)
 }
