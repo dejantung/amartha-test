@@ -15,7 +15,7 @@ import (
 
 type BillingServiceProvider interface {
 	CreateLoan(ctx context.Context, payload model.CreateLoanPayload) (*model.CreateLoanResponse, error)
-	GetPaymentSchedule(ctx context.Context, request model.GetScheduleResponse) (*model.GetScheduleResponse, error)
+	GetPaymentSchedule(ctx context.Context, request model.GetSchedulePayload) (*model.GetScheduleResponse, error)
 	IsCustomerDelinquency(ctx context.Context, payload model.IsDelinquentPayload) (*model.IsDelinquentResponse, error)
 	GetOutstandingBalance(ctx context.Context, payload model.IsDelinquentPayload) (float64, error)
 
@@ -61,7 +61,7 @@ func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoan
 	newLoan, err := b.repo.CreateLoan(ctx, loan)
 	if err != nil {
 		b.log.WithField("customer_id", payload.CustomerID).
-			WithField("error", err.Error()).Error("[CreateLoan] Unexpected error when creating loan")
+			WithField("error", err.Error()).Info("[CreateLoan] Unexpected error when creating loan")
 		return nil, err
 	}
 
@@ -96,9 +96,30 @@ func (b BillingService) paymentSchemaMaker(loan domain.Loan) (float64, []domain.
 	return totalLoan, newSchedule
 }
 
-func (b BillingService) GetPaymentSchedule(ctx context.Context, request model.GetScheduleResponse) (*model.GetScheduleResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (b BillingService) GetPaymentSchedule(ctx context.Context, request model.GetSchedulePayload) (*model.GetScheduleResponse, error) {
+	b.log.WithField("loan_id", request.LoanID).
+		WithField("customer_id", request.CustomerID).Info("[GetPaymentSchedule] getting payment schedule for loan")
+
+	loan, err := b.repo.GetLoanByIDAndCustomerID(ctx, request.LoanID, request.CustomerID)
+	if err != nil {
+		b.log.WithField("loan_id", request.LoanID).
+			WithField("customer_id", request.CustomerID).
+			WithField("error", err.Error()).Error("[GetPaymentSchedule] Unexpected error when getting loan")
+		return nil, err
+	}
+
+	if loan == nil {
+		b.log.WithField("loan_id", request.LoanID).
+			WithField("customer_id", request.CustomerID).Info("[GetPaymentSchedule] loan not found")
+		return nil, apperror.New(apperror.NotFound, "loan not found")
+	}
+
+	b.log.WithField("loan_id", request.LoanID).
+		WithField("customer_id", request.CustomerID).Info("[GetPaymentSchedule] loan found")
+
+	return &model.GetScheduleResponse{
+		Schedules: b.MapScheduleResponse(loan.Schedules),
+	}, nil
 }
 
 func (b BillingService) IsCustomerDelinquency(ctx context.Context, payload model.IsDelinquentPayload) (*model.IsDelinquentResponse, error) {
