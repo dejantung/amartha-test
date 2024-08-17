@@ -200,4 +200,48 @@ var _ = Describe("Service", func() {
 			}
 		})
 	})
+
+	Describe("GetPaymentSchedule", func() {
+		payload := model.GetSchedulePayload{
+			LoanID:     randUUID,
+			CustomerID: randUUID,
+		}
+
+		Describe("Positive case", func() {
+			It("should return correct schedule response", func() {
+				mockLoan.Schedules = mockSchedule
+				repo.EXPECT().GetLoanByIDAndCustomerID(ctx, payload.LoanID, payload.CustomerID).Return(&mockLoan, nil)
+
+				response, err := svc.GetPaymentSchedule(ctx, payload)
+				Expect(err).To(BeNil())
+				Expect(len(response.Schedules)).To(Equal(len(mockSchedule)))
+
+				for i, val := range response.Schedules {
+					Expect(val.PaymentNo).To(Equal(mockSchedule[i].PaymentNo))
+					Expect(val.PaymentDueDate).To(Equal(mockSchedule[i].PaymentDueDate.Format("2006-01-02")))
+					Expect(val.PaymentAmount).To(Equal(mockSchedule[i].PaymentAmount))
+					Expect(val.PaymentStatus).To(Equal(mockSchedule[i].PaymentStatus))
+					Expect(val.IsMissPayment).To(Equal(mockSchedule[i].IsMissPayment))
+				}
+			})
+		})
+
+		Describe("Negative case", func() {
+			It("when loan not found", func() {
+				repo.EXPECT().GetLoanByIDAndCustomerID(ctx, payload.LoanID, payload.CustomerID).Return(nil, nil)
+				_, err := svc.GetPaymentSchedule(ctx, payload)
+
+				var errs *apperror.CustomError
+				ok := errors.As(err, &errs)
+				Expect(ok).To(BeTrue())
+				Expect(errs.Cause).To(Equal(apperror.NotFound))
+			})
+
+			It("when error on get loan by id and customer id", func() {
+				repo.EXPECT().GetLoanByIDAndCustomerID(ctx, payload.LoanID, payload.CustomerID).Return(nil, someErr)
+				_, err := svc.GetPaymentSchedule(ctx, payload)
+				Expect(err).To(Equal(someErr))
+			})
+		})
+	})
 })
