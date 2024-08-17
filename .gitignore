@@ -49,7 +49,6 @@ fabric.properties
 *.sw?
 
 # Generated Go files
-*_test.go
 *_gen.go
 
 # Docker
