@@ -7,6 +7,7 @@ import (
 
 type CreateLoanPayload struct {
 	CustomerID uuid.UUID `json:"customer_id"`
+	LoanAmount float64   `json:"loan_amount"`
 }
 
 type ScheduleResponse struct {
@@ -20,7 +21,10 @@ type ScheduleResponse struct {
 }
 
 type CreateLoanResponse struct {
-	Schedules []ScheduleResponse `json:"schedules"`
+	LoanID     uuid.UUID          `json:"loan_id"`
+	CustomerID uuid.UUID          `json:"customer_id"`
+	LoanAmount float64            `json:"loan_amount"`
+	Schedules  []ScheduleResponse `json:"schedules"`
 }
 
 type GetScheduleResponse struct {
