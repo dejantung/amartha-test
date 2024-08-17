@@ -41,7 +41,6 @@ func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoan
 	}
 
 	var loanSchema []domain.Schedule
-	var scheduleResp []model.ScheduleResponse
 
 	loan := domain.Loan{
 		CustomerID:      payload.CustomerID,
@@ -59,25 +58,13 @@ func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoan
 		return nil, err
 	}
 
-	for _, val := range newLoan.Schedules {
-		scheduleResp = append(scheduleResp, model.ScheduleResponse{
-			ScheduleID:     val.ScheduleID,
-			LoanID:         val.LoanID,
-			PaymentNo:      val.PaymentNo,
-			PaymentDueDate: val.PaymentDueDate.Format("2006-01-02"),
-			PaymentAmount:  val.PaymentAmount,
-			PaymentStatus:  val.PaymentStatus,
-			IsMissPayment:  val.IsMissPayment,
-		})
-	}
-
 	//TODO: add kafka producer here
 
 	return &model.CreateLoanResponse{
-		LoanID:     loan.LoanID,
-		CustomerID: loan.CustomerID,
+		LoanID:     newLoan.LoanID,
+		CustomerID: newLoan.CustomerID,
 		LoanAmount: totalLoan,
-		Schedules:  scheduleResp,
+		Schedules:  b.MapScheduleResponse(newLoan.Schedules),
 	}, nil
 }
 
@@ -123,6 +110,24 @@ func (b BillingService) CreateCustomer(ctx context.Context, payload model.Create
 func (b BillingService) GetCustomer(ctx context.Context) (*model.GetCustomerResponse, error) {
 	//TODO implement me
 	panic("implement me")
+}
+
+func (b BillingService) MapScheduleResponse(schedule []domain.Schedule) []model.ScheduleResponse {
+	var scheduleResp []model.ScheduleResponse
+
+	for _, val := range schedule {
+		scheduleResp = append(scheduleResp, model.ScheduleResponse{
+			ScheduleID:     val.ScheduleID,
+			LoanID:         val.LoanID,
+			PaymentNo:      val.PaymentNo,
+			PaymentDueDate: val.PaymentDueDate.Format("2006-01-02"),
+			PaymentAmount:  val.PaymentAmount,
+			PaymentStatus:  val.PaymentStatus,
+			IsMissPayment:  val.IsMissPayment,
+		})
+	}
+
+	return scheduleResp
 }
 
 func NewBillingService(repo repository.BillingRepositoryProvider, log logger.Logger) *BillingService {
