@@ -258,9 +258,7 @@ var _ = Describe("Service", func() {
 
 	Describe("IsDelinquent", func() {
 		Describe("Positive case", func() {
-			cacheRes := &model.IsDelinquentResponse{
-				IsDelinquent: true,
-			}
+			cacheRes := "{\"is_delinquent\":true}"
 
 			It("should return correct response with cache", func() {
 				cache.EXPECT().Get(ctx, gomock.Any()).Return(cacheRes, nil)
@@ -288,6 +286,7 @@ var _ = Describe("Service", func() {
 						PaymentNo: 27,
 					},
 				}, nil)
+				repo.EXPECT().LastActiveLoan(ctx, gomock.Any()).Return(&domain.Loan{}, nil)
 
 				response, err := svc.IsCustomerDelinquency(ctx, uuid.New())
 				Expect(err).To(BeNil())
@@ -313,6 +312,7 @@ var _ = Describe("Service", func() {
 						PaymentNo: 26,
 					},
 				}, nil)
+				repo.EXPECT().LastActiveLoan(ctx, gomock.Any()).Return(&domain.Loan{}, nil)
 
 				response, err := svc.IsCustomerDelinquency(ctx, uuid.New())
 				Expect(err).To(BeNil())
@@ -322,6 +322,7 @@ var _ = Describe("Service", func() {
 			It("when customer only have 1 unpaid / missing payment", func() {
 				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
 				cache.EXPECT().Set(ctx, gomock.Any(), gomock.Any()).Return(nil)
+				repo.EXPECT().LastActiveLoan(ctx, gomock.Any()).Return(&domain.Loan{}, nil)
 
 				repo.EXPECT().GetCustomerByID(ctx, gomock.Any()).Return(&domain.Customer{}, nil)
 				repo.EXPECT().GetUnpaidAndMissPaymentUntil(ctx, gomock.Any(), gomock.Any()).Return([]domain.Schedule{
@@ -354,6 +355,8 @@ var _ = Describe("Service", func() {
 				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
 				repo.EXPECT().GetCustomerByID(ctx, gomock.Any()).Return(&domain.Customer{}, nil)
 				repo.EXPECT().GetUnpaidAndMissPaymentUntil(ctx, gomock.Any(), gomock.Any()).Return(nil, someErr)
+				repo.EXPECT().LastActiveLoan(ctx, gomock.Any()).Return(&domain.Loan{}, nil)
+
 				_, err := svc.IsCustomerDelinquency(ctx, uuid.New())
 				Expect(err).To(Equal(someErr))
 			})
