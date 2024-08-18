@@ -71,9 +71,24 @@ func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoan
 		return nil, err
 	}
 
-	//TODO: add producer producer here
 	b.log.WithField("customer_id", payload.CustomerID).
 		WithField("loan", loan).Info("[CreateLoan] loan created successfully")
+
+	newEventID := uuid.New().String()
+	producerMessage := producer.Message{
+		EventID:   newEventID,
+		EventName: producer.EVENT_NAME_LOAN_CREATED,
+		Data:      newLoan,
+	}
+
+	b.log.WithField("customer_id", payload.CustomerID).
+		WithField("producer_payload", producerMessage).Info("[CreateLoan] sending message to producer")
+	err = b.producer.SendMessage(ctx, producerMessage)
+	if err != nil {
+		b.log.WithField("customer_id", payload.CustomerID).
+			WithField("error", err.Error()).Error("[CreateLoan][SendMessage] failed to send message to producer")
+		return nil, err
+	}
 
 	return &model.CreateLoanResponse{
 		LoanID:     newLoan.LoanID,
