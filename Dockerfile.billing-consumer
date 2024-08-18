@@ -1,0 +1,27 @@
+FROM golang:1.22.6-alpine AS builder
+
+WORKDIR /app
+
+# Copy go.mod and go.sum from the root directory
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the source code from the root directory
+COPY cmd/billing/consumer ./cmd/billing
+COPY internal/billing ./internal/billing
+COPY pkg ./pkg
+COPY ./config-file ./config-file
+
+# Build the Payment API binary
+RUN go build -o /app/bin/consumer ./cmd/billing/consumer.go
+
+FROM alpine:latest
+
+WORKDIR /root/
+
+# Copy the Pre-built binary file from the previous stage
+COPY --from=builder /app/bin/consumer .
+COPY ./config-file ./config-file
+
+EXPOSE 8080
+CMD ["./consumer"]
