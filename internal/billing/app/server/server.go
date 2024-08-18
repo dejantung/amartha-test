@@ -10,6 +10,7 @@ import (
 	"billing-engine/pkg/logger"
 	"billing-engine/pkg/producer"
 	"context"
+	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -44,7 +45,7 @@ func NewServer(log logger.Logger, cfg *config.Config) (*Server, error) {
 	}
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: cfg.Cache.Host,
+		Addr: fmt.Sprintf("%s:%d", cfg.Cache.Host, cfg.Cache.Port),
 		DB:   cfg.Cache.Database,
 	})
 
@@ -60,7 +61,7 @@ func NewServer(log logger.Logger, cfg *config.Config) (*Server, error) {
 	}
 
 	newBillingRepository := repository.NewBillingRepositoryProvider(gorm, log)
-	newBillingCache := repository.NewBillingCacheProvider(redisClient)
+	newBillingCache := repository.NewBillingCacheProvider(redisClient, log)
 	billingService := service.NewBillingService(newBillingRepository, newBillingCache, kafkaProducer, log)
 	billingHandler := api.NewBillingHandler(billingService)
 
