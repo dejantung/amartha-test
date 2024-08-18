@@ -8,6 +8,7 @@ import (
 	apperror "billing-engine/pkg/customerror"
 	"billing-engine/pkg/enum"
 	"billing-engine/pkg/logger"
+	pkgMock "billing-engine/pkg/mocks"
 	"context"
 	"errors"
 	"github.com/google/uuid"
@@ -31,6 +32,7 @@ var _ = Describe("Service", func() {
 		mockLoan     domain.Loan
 		mockSchedule []domain.Schedule
 		cache        *mocks.MockBillingCacheProvider
+		producer     *pkgMock.MockProducerProvider
 	)
 
 	BeforeEach(func() {
@@ -38,7 +40,8 @@ var _ = Describe("Service", func() {
 		repo = mocks.NewMockBillingRepositoryProvider(mockCtrl)
 		log = logger.NewZeroLogger("test")
 		cache = mocks.NewMockBillingCacheProvider(mockCtrl)
-		svc = NewBillingService(repo, cache, log)
+		producer = pkgMock.NewMockProducerProvider(mockCtrl)
+		svc = NewBillingService(repo, cache, producer, log)
 
 		mockSchedule = []domain.Schedule{
 			{
@@ -113,6 +116,7 @@ var _ = Describe("Service", func() {
 				repo.EXPECT().GetCustomerByID(ctx, payload.CustomerID).Return(&domain.Customer{}, nil)
 				mockLoan.Schedules = mockSchedule
 				repo.EXPECT().CreateLoan(ctx, gomock.Any()).Return(&mockLoan, nil)
+				producer.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Return(nil)
 
 				response, err := svc.CreateLoan(ctx, payload)
 				Expect(err).To(BeNil())
@@ -149,6 +153,16 @@ var _ = Describe("Service", func() {
 			It("when error on create loan", func() {
 				repo.EXPECT().GetCustomerByID(ctx, payload.CustomerID).Return(&domain.Customer{}, nil)
 				repo.EXPECT().CreateLoan(ctx, gomock.Any()).Return(nil, someErr)
+				_, err := svc.CreateLoan(ctx, payload)
+				Expect(err).To(Equal(someErr))
+			})
+
+			It("when error on produce message", func() {
+				repo.EXPECT().GetCustomerByID(ctx, payload.CustomerID).Return(&domain.Customer{}, nil)
+				mockLoan.Schedules = mockSchedule
+				repo.EXPECT().CreateLoan(ctx, gomock.Any()).Return(&mockLoan, nil)
+				producer.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Return(someErr)
+
 				_, err := svc.CreateLoan(ctx, payload)
 				Expect(err).To(Equal(someErr))
 			})
