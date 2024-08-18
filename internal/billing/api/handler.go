@@ -83,3 +83,34 @@ func (s *AppServer) GetOutstandingBalanceHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
+
+func (s *AppServer) CreateCustomerHandler(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	payload := model.CreateCustomerPayload{}
+	if err := c.Bind(&payload); err != nil {
+		return err
+	}
+
+	if err := c.Validate(payload); err != nil {
+		return err
+	}
+
+	result, err := s.BillingService.CreateCustomer(ctx, payload)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
+}
+
+func (s *AppServer) GetCustomerHandler(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	result, err := s.BillingService.GetCustomer(ctx)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
+}
