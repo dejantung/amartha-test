@@ -65,3 +65,21 @@ func (s *AppServer) IsCustomerDelinquentHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
+
+func (s *AppServer) GetOutstandingBalanceHandler(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	customerID := c.Param("customer_id")
+	// convert string to uuid
+	customerUUID, err := uuid.Parse(customerID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.NewErrorResponse(400, "invalid customer id"))
+	}
+
+	result, err := s.BillingService.GetOutstandingBalance(ctx, customerUUID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
+}
