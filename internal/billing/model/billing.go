@@ -36,11 +36,6 @@ type GetSchedulePayload struct {
 	CustomerID uuid.UUID `query:"customer_id"`
 }
 
-type IsDelinquentPayload struct {
-	LoanID     uuid.UUID `query:"loan_id"`
-	CustomerID uuid.UUID `query:"customer_id"`
-}
-
 type IsDelinquentResponse struct {
 	IsDelinquent bool `json:"is_delinquent"`
 }
@@ -55,4 +50,8 @@ type GetCustomerResponse struct {
 
 type CreateCustomerPayload struct {
 	TotalCustomer int `json:"total_customer"`
+}
+
+type GetOutstandingBalanceResponse struct {
+	OutstandingBalance float64 `json:"outstanding_balance"`
 }
