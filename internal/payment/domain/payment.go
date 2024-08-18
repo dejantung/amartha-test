@@ -19,5 +19,6 @@ type Payment struct {
 }
 
 func (payment *Payment) BeforeCreate(tx *gorm.DB) (err error) {
+	payment.PaymentID = uuid.New()
 	return payment.Base.BeforeCreate(tx)
 }
