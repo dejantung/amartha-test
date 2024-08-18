@@ -42,7 +42,7 @@ type Config struct {
 func NewConfig(service string) (*Config, error) {
 	var config Config
 
-	configName := fmt.Sprintf("config-%s", service)
+	configName := fmt.Sprintf("%s-config", service)
 	viper.SetConfigName(configName)
 	viper.AddConfigPath("./config-file")
 	viper.AutomaticEnv()
