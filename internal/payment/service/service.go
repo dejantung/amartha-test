@@ -9,12 +9,15 @@ import (
 	"billing-engine/pkg/logger"
 	"billing-engine/pkg/producer"
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 )
 
 type PaymentServiceProvider interface {
 	ProcessPayment(ctx context.Context, payload model.ProcessPaymentPayload) (model.ProcessPaymentResponse, error)
 	ProcessLoanEvent(ctx context.Context, payloads model.LoanCreatedPayload) error
+	ProcessMessage(ctx context.Context, payload []byte) error
 }
 
 type impl struct {
@@ -109,6 +112,44 @@ func (i impl) ProcessLoanEvent(ctx context.Context, payloads model.LoanCreatedPa
 	}
 
 	i.log.WithField("payload", payloads).Info("[ProcessLoanEvent] loan event processed")
+	return nil
+}
+
+func (i impl) ProcessMessage(ctx context.Context, payload []byte) error {
+	i.log.WithField("payload", string(payload)).Info("[ProcessMessage] processing message")
+
+	var message producer.Message
+	err := json.Unmarshal(payload, &message)
+	if err != nil {
+		i.log.WithField("error", err).Error("[ProcessMessage] failed to unmarshal message payload")
+		return err
+	}
+
+	switch message.EventName {
+	case producer.EVENT_NAME_LOAN_CREATED:
+		var loanPayload model.LoanCreatedPayload
+		dataBytes, ok := message.Data.([]byte)
+		if !ok {
+			return fmt.Errorf("failed to assert message.Data to []byte")
+		}
+
+		err = json.Unmarshal(dataBytes, &loanPayload)
+		if err != nil {
+			i.log.WithField("error", err).Error("[ProcessMessage] failed to unmarshal loan created payload")
+			return err
+		}
+
+		err = i.ProcessLoanEvent(ctx, loanPayload)
+		if err != nil {
+			i.log.WithField("error", err).Error("[ProcessMessage] failed to process loan event")
+			return err
+		}
+	default:
+		i.log.WithField("event_name", message.EventName).
+			WithField("payload", message).Error("[ProcessMessage] unknown event name")
+	}
+
+	i.log.WithField("payload", string(payload)).Info("[ProcessMessage] message processed")
 	return nil
 }
 
