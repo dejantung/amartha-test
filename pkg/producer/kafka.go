@@ -1,4 +1,4 @@
-package kafka
+package producer
 
 import (
 	"billing-engine/pkg/logger"
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//go:generate mockgen -destination=../mocks/mock_producer.go -package=mocks billing-engine/pkg/kafka ProducerProvider
+//go:generate mockgen -destination=../mocks/mock_producer.go -package=mocks billing-engine/pkg/producer ProducerProvider
 type ProducerProvider interface {
 	SendMessage(ctx context.Context, payload Message) error
 }
@@ -33,7 +33,7 @@ func (i impl) SendMessage(ctx context.Context, payload Message) error {
 		Value: msgBytes,
 	}
 
-	i.log.WithField("payload", payload).Info("[SendMessage] sending message to kafka")
+	i.log.WithField("payload", payload).Info("[SendMessage] sending message to producer")
 	err = i.conn.SetWriteDeadline(time.Now().Add(time.Duration(i.config.WriteTimeout) * time.Second))
 	if err != nil {
 		i.log.WithField("error", err).Error("[SendMessage] failed to set write deadline")
@@ -46,7 +46,7 @@ func (i impl) SendMessage(ctx context.Context, payload Message) error {
 		return err
 	}
 
-	i.log.WithField("payload", payload).Info("[SendMessage] message sent to kafka")
+	i.log.WithField("payload", payload).Info("[SendMessage] message sent to producer")
 	return nil
 }
 
