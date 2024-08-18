@@ -3,6 +3,7 @@ package domain
 import (
 	"billing-engine/pkg/enum"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -15,4 +16,8 @@ type Payment struct {
 	AmountPaid    float64            `json:"amount_paid"`
 	PaymentMethod string             `json:"payment_method"`
 	PaymentStatus enum.PaymentStatus `json:"payment_status"`
+}
+
+func (payment *Payment) BeforeCreate(tx *gorm.DB) (err error) {
+	return payment.Base.BeforeCreate(tx)
 }
