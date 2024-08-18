@@ -47,7 +47,7 @@ func main() {
 		panic(err)
 	}
 
-	consumer, err := master.ConsumePartition(cfg.Kafka.LoanTopic, 0, sarama.OffsetOldest)
+	consumer, err := master.ConsumePartition(cfg.Kafka.LoanTopic, 0, sarama.OffsetNewest)
 	if err != nil {
 		panic(err)
 	}
