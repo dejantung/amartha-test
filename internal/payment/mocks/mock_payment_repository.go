@@ -42,6 +42,20 @@ func (m *MockPaymentRepositoryProvider) EXPECT() *MockPaymentRepositoryProviderM
 	return m.recorder
 }
 
+// CreateLoan mocks base method.
+func (m *MockPaymentRepositoryProvider) CreateLoan(arg0 context.Context, arg1 domain.Loan) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateLoan", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateLoan indicates an expected call of CreateLoan.
+func (mr *MockPaymentRepositoryProviderMockRecorder) CreateLoan(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLoan", reflect.TypeOf((*MockPaymentRepositoryProvider)(nil).CreateLoan), arg0, arg1)
+}
+
 // IsCustomerHasLoan mocks base method.
 func (m *MockPaymentRepositoryProvider) IsCustomerHasLoan(arg0 context.Context, arg1, arg2 uuid.UUID) (bool, error) {
 	m.ctrl.T.Helper()
