@@ -2,13 +2,20 @@ package api
 
 import (
 	"billing-engine/internal/billing/model"
+	"billing-engine/internal/billing/service"
+	"billing-engine/pkg/logger"
 	"billing-engine/pkg/response"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
-func (s *AppServer) CreateLoanHandler(c echo.Context) error {
+type BillingHandler struct {
+	BillingService service.BillingServiceProvider
+	log            logger.Logger
+}
+
+func (s *BillingHandler) CreateLoanHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	payload := model.CreateLoanPayload{}
@@ -28,7 +35,7 @@ func (s *AppServer) CreateLoanHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
 
-func (s *AppServer) GetPaymentScheduleHandler(c echo.Context) error {
+func (s *BillingHandler) GetPaymentScheduleHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	payload := model.GetSchedulePayload{}
@@ -48,7 +55,7 @@ func (s *AppServer) GetPaymentScheduleHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
 
-func (s *AppServer) IsCustomerDelinquentHandler(c echo.Context) error {
+func (s *BillingHandler) IsCustomerDelinquentHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	customerID := c.Param("customer_id")
@@ -66,7 +73,7 @@ func (s *AppServer) IsCustomerDelinquentHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
 
-func (s *AppServer) GetOutstandingBalanceHandler(c echo.Context) error {
+func (s *BillingHandler) GetOutstandingBalanceHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	customerID := c.Param("customer_id")
@@ -84,7 +91,7 @@ func (s *AppServer) GetOutstandingBalanceHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
 
-func (s *AppServer) CreateCustomerHandler(c echo.Context) error {
+func (s *BillingHandler) CreateCustomerHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	payload := model.CreateCustomerPayload{}
@@ -104,7 +111,7 @@ func (s *AppServer) CreateCustomerHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
 
-func (s *AppServer) GetCustomerHandler(c echo.Context) error {
+func (s *BillingHandler) GetCustomerHandler(c echo.Context) error {
 	ctx := c.Request().Context()
 
 	result, err := s.BillingService.GetCustomer(ctx)
@@ -113,4 +120,10 @@ func (s *AppServer) GetCustomerHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
+}
+
+func NewBillingHandler(svc service.BillingServiceProvider) *BillingHandler {
+	return &BillingHandler{
+		BillingService: svc,
+	}
 }
