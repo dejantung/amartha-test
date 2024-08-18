@@ -10,6 +10,7 @@ type ProcessPaymentPayload struct {
 	Amount     float64   `json:"amount"`
 	LoanID     uuid.UUID `json:"loan_id"`
 	ScheduleID uuid.UUID `json:"schedule_id"`
+	CustomerID uuid.UUID `json:"customer_id"`
 }
 
 type ProcessPaymentResponse struct {
