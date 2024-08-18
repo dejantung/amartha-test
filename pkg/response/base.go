@@ -17,3 +17,7 @@ func NewResponse(code int, message string, data interface{}) Response {
 func NewSuccessResponse(data interface{}) Response {
 	return NewResponse(200, "Success", data)
 }
+
+func NewErrorResponse(code int, message string) Response {
+	return NewResponse(code, message, nil)
+}
