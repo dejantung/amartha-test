@@ -5,7 +5,10 @@ import (
 	"context"
 	"github.com/IBM/sarama"
 	"github.com/segmentio/kafka-go"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 )
 
 type Consumer struct {
@@ -41,6 +44,8 @@ func StartNewConsumer(cfg Config, processor MessageProcessor, log logger.Logger)
 		wg       sync.WaitGroup
 	)
 
+	log.Info("[NewConsumer] starting consumer")
+
 	for _, partition := range partitions {
 		pc, err := c.ConsumePartition(cfg.Topic, partition, sarama.OffsetNewest)
 		if err != nil {
@@ -70,6 +75,10 @@ func StartNewConsumer(cfg Config, processor MessageProcessor, log logger.Logger)
 			}
 		}
 	}()
+
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigterm, syscall.SIGINT, syscall.SIGTERM)
+	<-sigterm
 
 	if err := c.Close(); err != nil {
 		log.WithField("error", err).Error("[NewConsumer] failed to close consumer")
