@@ -10,7 +10,6 @@ import (
 	"billing-engine/pkg/producer"
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -127,19 +126,20 @@ func (i impl) ProcessMessage(ctx context.Context, payload []byte) error {
 
 	switch message.EventName {
 	case producer.EVENT_NAME_LOAN_CREATED:
-		var loanPayload model.LoanCreatedPayload
-		dataBytes, ok := message.Data.([]byte)
-		if !ok {
-			return fmt.Errorf("failed to assert message.Data to []byte")
-		}
+		var parseData model.LoanCreatedPayload
 
-		err = json.Unmarshal(dataBytes, &loanPayload)
+		dataByte, err := json.Marshal(message.Data)
 		if err != nil {
-			i.log.WithField("error", err).Error("[ProcessMessage] failed to unmarshal loan created payload")
+			i.log.WithField("error", err).Error("[ProcessMessage] failed to marshal message.Data")
+			return err
+		}
+		err = json.Unmarshal(dataByte, &parseData)
+		if err != nil {
+			i.log.WithField("error", err).Error("[ProcessMessage] failed to assert message.Data to model")
 			return err
 		}
 
-		err = i.ProcessLoanEvent(ctx, loanPayload)
+		err = i.ProcessLoanEvent(ctx, parseData)
 		if err != nil {
 			i.log.WithField("error", err).Error("[ProcessMessage] failed to process loan event")
 			return err
