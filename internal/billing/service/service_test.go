@@ -30,13 +30,15 @@ var _ = Describe("Service", func() {
 		log          logger.Logger
 		mockLoan     domain.Loan
 		mockSchedule []domain.Schedule
+		cache        *mocks.MockBillingCacheProvider
 	)
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		repo = mocks.NewMockBillingRepositoryProvider(mockCtrl)
 		log = logger.NewZeroLogger("test")
-		svc = NewBillingService(repo, log)
+		cache = mocks.NewMockBillingCacheProvider(mockCtrl)
+		svc = NewBillingService(repo, cache, log)
 
 		mockSchedule = []domain.Schedule{
 			{
@@ -87,14 +89,12 @@ var _ = Describe("Service", func() {
 		}
 
 		mockLoan = domain.Loan{
-			LoanID:             randUUID,
-			CustomerID:         uuid.New(),
-			PrincipalAmount:    5000000,
-			InterestRate:       0.1,
-			StartDate:          timeNow,
-			EndDate:            timeNow.AddDate(0, 5, 0),
-			OutstandingBalance: 0,
-			IsDelinquent:       false,
+			LoanID:          randUUID,
+			CustomerID:      uuid.New(),
+			PrincipalAmount: 5000000,
+			InterestRate:    0.1,
+			StartDate:       timeNow,
+			EndDate:         timeNow.AddDate(0, 5, 0),
 			Customer: domain.Customer{
 				CustomerID: uuid.New(),
 			},
@@ -244,4 +244,110 @@ var _ = Describe("Service", func() {
 			})
 		})
 	})
+
+	Describe("IsDelinquent", func() {
+		Describe("Positive case", func() {
+			cacheRes := &model.IsDelinquentResponse{
+				IsDelinquent: true,
+			}
+
+			It("should return correct response with cache", func() {
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(cacheRes, nil)
+				response, err := svc.IsCustomerDelinquency(ctx, uuid.New())
+				Expect(err).To(BeNil())
+				Expect(response.IsDelinquent).To(BeTrue())
+			})
+
+			It("when customer is not delinquent", func() {
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				cache.EXPECT().Set(ctx, gomock.Any(), gomock.Any()).Return(nil)
+
+				repo.EXPECT().GetCustomerByID(ctx, gomock.Any()).Return(&domain.Customer{}, nil)
+				repo.EXPECT().GetUnpaidAndMissPaymentUntil(ctx, gomock.Any(), gomock.Any()).Return([]domain.Schedule{
+					{
+						PaymentNo: 1,
+					},
+					{
+						PaymentNo: 3,
+					},
+					{
+						PaymentNo: 5,
+					},
+					{
+						PaymentNo: 27,
+					},
+				}, nil)
+
+				response, err := svc.IsCustomerDelinquency(ctx, uuid.New())
+				Expect(err).To(BeNil())
+				Expect(response.IsDelinquent).To(BeFalse())
+			})
+
+			It("when customer is delinquent", func() {
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				cache.EXPECT().Set(ctx, gomock.Any(), gomock.Any()).Return(nil)
+
+				repo.EXPECT().GetCustomerByID(ctx, gomock.Any()).Return(&domain.Customer{}, nil)
+				repo.EXPECT().GetUnpaidAndMissPaymentUntil(ctx, gomock.Any(), gomock.Any()).Return([]domain.Schedule{
+					{
+						PaymentNo: 1,
+					},
+					{
+						PaymentNo: 3,
+					},
+					{
+						PaymentNo: 25,
+					},
+					{
+						PaymentNo: 26,
+					},
+				}, nil)
+
+				response, err := svc.IsCustomerDelinquency(ctx, uuid.New())
+				Expect(err).To(BeNil())
+				Expect(response.IsDelinquent).To(BeTrue())
+			})
+
+			It("when customer only have 1 unpaid / missing payment", func() {
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				cache.EXPECT().Set(ctx, gomock.Any(), gomock.Any()).Return(nil)
+
+				repo.EXPECT().GetCustomerByID(ctx, gomock.Any()).Return(&domain.Customer{}, nil)
+				repo.EXPECT().GetUnpaidAndMissPaymentUntil(ctx, gomock.Any(), gomock.Any()).Return([]domain.Schedule{
+					{
+						PaymentNo: 1,
+					},
+				}, nil)
+
+				response, err := svc.IsCustomerDelinquency(ctx, uuid.New())
+				Expect(err).To(BeNil())
+				Expect(response.IsDelinquent).To(BeFalse())
+			})
+		})
+
+		Describe("Negative case", func() {
+			It("when error getting cache", func() {
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, someErr)
+				_, err := svc.IsCustomerDelinquency(ctx, uuid.New())
+				Expect(err).To(Equal(someErr))
+			})
+
+			It("when error getting customer by id", func() {
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				repo.EXPECT().GetCustomerByID(ctx, gomock.Any()).Return(nil, someErr)
+				_, err := svc.IsCustomerDelinquency(ctx, uuid.New())
+				Expect(err).To(Equal(someErr))
+			})
+
+			It("when error getting unpaid and miss payment until", func() {
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				repo.EXPECT().GetCustomerByID(ctx, gomock.Any()).Return(&domain.Customer{}, nil)
+				repo.EXPECT().GetUnpaidAndMissPaymentUntil(ctx, gomock.Any(), gomock.Any()).Return(nil, someErr)
+				_, err := svc.IsCustomerDelinquency(ctx, uuid.New())
+				Expect(err).To(Equal(someErr))
+			})
+
+		})
+	})
+
 })
