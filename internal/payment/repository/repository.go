@@ -13,6 +13,7 @@ type PaymentRepositoryProvider interface {
 	IsLoanScheduleExist(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID) (bool, error)
 	IsCustomerHasLoan(ctx context.Context, customerID uuid.UUID, loanID uuid.UUID) (bool, error)
 	UpdatePaymentScheduleStatus(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID, status enum.PaymentStatus) (*domain.PaymentSchedule, error)
+	CreatePayment(ctx context.Context, payment domain.Payment) (domain.Payment, error)
 
 	CreateLoan(ctx context.Context, loan domain.Loan) (domain.Loan, error)
 }
@@ -76,6 +77,15 @@ func (i impl) CreateLoan(ctx context.Context, loan domain.Loan) (domain.Loan, er
 	}
 
 	return loan, nil
+}
+
+func (i impl) CreatePayment(ctx context.Context, payment domain.Payment) (domain.Payment, error) {
+	err := i.db.WithContext(ctx).Create(&payment).Error
+	if err != nil {
+		return domain.Payment{}, err
+	}
+
+	return payment, nil
 }
 
 func NewPaymentRepository(db *gorm.DB) PaymentRepositoryProvider {
