@@ -12,6 +12,7 @@ func main() {
 	cfg, err := config.NewConfig("billing")
 	if err != nil {
 		log.WithField("error", err).Error("failed to load config")
+		panic(err)
 	}
 
 	log.WithField("config", cfg).Info("config loaded successfully")
