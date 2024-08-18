@@ -60,6 +60,7 @@ func NewServer(log logger.Logger, cfg *config.Config) (*Server, error) {
 	e.Validator = &CustomValidator{validator: validator.New()}
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Validator = &CustomValidator{validator: validator.New()}
 
 	paymentHandler.AddRoutes(e)
 
