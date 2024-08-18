@@ -58,3 +58,10 @@ func NewConfig(service string) (*Config, error) {
 
 	return &config, nil
 }
+
+func (c *Config) GetDSN() string {
+	return fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
+		c.Database.Host, c.Database.User, c.Database.Password, c.Database.Name, c.Database.Port, "disable",
+	)
+}
