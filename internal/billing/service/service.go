@@ -9,6 +9,7 @@ import (
 	"billing-engine/pkg/enum"
 	"billing-engine/pkg/logger"
 	"context"
+	"github.com/google/uuid"
 	"math"
 	"strconv"
 	"time"
@@ -17,8 +18,8 @@ import (
 type BillingServiceProvider interface {
 	CreateLoan(ctx context.Context, payload model.CreateLoanPayload) (*model.CreateLoanResponse, error)
 	GetPaymentSchedule(ctx context.Context, request model.GetSchedulePayload) (*model.GetScheduleResponse, error)
-	IsCustomerDelinquency(ctx context.Context, payload model.IsDelinquentPayload) (*model.IsDelinquentResponse, error)
-	GetOutstandingBalance(ctx context.Context, payload model.IsDelinquentPayload) (float64, error)
+	IsCustomerDelinquency(ctx context.Context, customerID uuid.UUID) (*model.IsDelinquentResponse, error)
+	GetOutstandingBalance(ctx context.Context, customerID uuid.UUID) (*model.GetOutstandingBalanceResponse, error)
 
 	// CreateCustomer NOTE: this method is out of context, so I will just merge it in the billing service
 	CreateCustomer(ctx context.Context, payload model.CreateCustomerPayload) (*model.GetCustomerResponse, error)
@@ -123,12 +124,12 @@ func (b BillingService) GetPaymentSchedule(ctx context.Context, request model.Ge
 	}, nil
 }
 
-func (b BillingService) IsCustomerDelinquency(ctx context.Context, payload model.IsDelinquentPayload) (*model.IsDelinquentResponse, error) {
+func (b BillingService) IsCustomerDelinquency(ctx context.Context, customerID uuid.UUID) (*model.IsDelinquentResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (b BillingService) GetOutstandingBalance(ctx context.Context, payload model.IsDelinquentPayload) (float64, error) {
+func (b BillingService) GetOutstandingBalance(ctx context.Context, customerID uuid.UUID) (*model.GetOutstandingBalanceResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
