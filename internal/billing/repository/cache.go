@@ -12,11 +12,25 @@ import (
 type BillingCacheProvider interface {
 	Set(ctx context.Context, key string, value interface{}) error
 	Get(ctx context.Context, key string) (interface{}, error)
+	Delete(ctx context.Context, key string) error
 }
 
 type redisCache struct {
 	client *redis.Client
 	log    logger.Logger
+}
+
+func (r redisCache) Delete(ctx context.Context, key string) error {
+	r.log.WithField("key", key).Info("[Delete] deleting key from cache")
+
+	err := r.client.Del(ctx, key).Err()
+	if err != nil {
+		r.log.WithField("error", err).Error("[Delete] failed to delete key from cache")
+		return err
+	}
+
+	r.log.WithField("key", key).Info("[Delete] key deleted from cache")
+	return nil
 }
 
 func (r redisCache) Set(ctx context.Context, key string, value interface{}) error {
