@@ -51,6 +51,3 @@ fabric.properties
 # Generated Go files
 *_gen.go
 
-# Docker
-**/Dockerfile
-**/docker-compose.yaml
