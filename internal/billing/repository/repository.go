@@ -19,6 +19,9 @@ type BillingRepositoryProvider interface {
 	GetLoanByIDAndCustomerID(ctx context.Context, loanID, customerID uuid.UUID) (*domain.Loan, error)
 	GetTotalUnpaidPaymentOnActiveLoan(ctx context.Context, loanId uuid.UUID) (float64, error)
 	LastActiveLoan(ctx context.Context, customerID uuid.UUID) (*domain.Loan, error)
+	GetLoanByScheduleID(ctx context.Context, scheduleID uuid.UUID) (*domain.Loan, error)
+	UpdateSchedulePayment(ctx context.Context, schedule *domain.Schedule) error
+	GetScheduleByID(ctx context.Context, scheduleID uuid.UUID) (*domain.Schedule, error)
 
 	// CreateCustomer NOTE: this method is out of context, so I will just merge it in the billing service
 	CreateCustomer(ctx context.Context, request []domain.Customer) error
@@ -30,6 +33,38 @@ type BillingRepositoryProvider interface {
 type repo struct {
 	db  *gorm.DB
 	log logger.Logger
+}
+
+func (r repo) UpdateSchedulePayment(ctx context.Context, schedule *domain.Schedule) error {
+	return r.db.WithContext(ctx).Model(&schedule).Updates(schedule).Error
+}
+
+func (r repo) GetScheduleByID(ctx context.Context, scheduleID uuid.UUID) (*domain.Schedule, error) {
+	var schedule domain.Schedule
+	err := r.db.WithContext(ctx).Where("schedule_id = ?", scheduleID).First(&schedule).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &schedule, nil
+}
+
+func (r repo) GetLoanByScheduleID(ctx context.Context, scheduleID uuid.UUID) (*domain.Loan, error) {
+	var loan domain.Loan
+	err := r.db.WithContext(ctx).Model(&domain.Schedule{}).
+		Select("loans.*").
+		Joins("JOIN loans ON loans.loan_id = schedules.loan_id").
+		Where("schedules.schedule_id = ?", scheduleID).
+		First(&loan).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &loan, nil
 }
 
 func (r repo) CreateLoan(ctx context.Context, request domain.Loan) (*domain.Loan, error) {
