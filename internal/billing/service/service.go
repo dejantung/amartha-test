@@ -192,8 +192,50 @@ func (b BillingService) IsCustomerDelinquency(ctx context.Context, customerID uu
 }
 
 func (b BillingService) GetOutstandingBalance(ctx context.Context, customerID uuid.UUID) (*model.GetOutstandingBalanceResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	b.log.WithField("customer_id", customerID).Info("[GetOutstandingBalance] getting outstanding balance for customer")
+
+	cacheKey := fmt.Sprintf(constant.CACHE_KEY_OUTSTANDING, customerID)
+	cacheData, err := b.cache.Get(ctx, cacheKey)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetOutstandingBalance - Cache Get] Unexpected error when getting cache")
+		return nil, err
+	}
+
+	if cacheData != nil {
+		b.log.WithField("customer_id", customerID).Info("[GetOutstandingBalance] customer found in cache")
+		return cacheData.(*model.GetOutstandingBalanceResponse), nil
+	}
+
+	var resp model.GetOutstandingBalanceResponse
+	customer, err := b.repo.GetCustomerByID(ctx, customerID)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetCustomerByID] Unexpected error when getting customer")
+		return nil, err
+	}
+
+	if customer == nil {
+		b.log.WithField("customer_id", customerID).Info("[GetOutstandingBalance] customer not found")
+		return nil, apperror.New(apperror.NotFound, "customer not found")
+	}
+
+	totalOutstandingBalance, err := b.repo.GetTotalUnpaidPaymentOnActiveLoan(ctx, customerID)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetTotalOutstandingBalance] Unexpected error when getting total outstanding balance")
+		return nil, err
+	}
+
+	resp.OutstandingBalance = totalOutstandingBalance
+	err = b.cache.Set(ctx, cacheKey, &resp)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetOutstandingBalance - Cache Set] Unexpected error when setting cache")
+		return nil, err
+	}
+
+	return &resp, nil
 }
 
 func (b BillingService) CreateCustomer(ctx context.Context, payload model.CreateCustomerPayload) (*model.GetCustomerResponse, error) {
