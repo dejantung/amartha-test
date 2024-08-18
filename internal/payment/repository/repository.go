@@ -12,7 +12,7 @@ import (
 type PaymentRepositoryProvider interface {
 	IsLoanScheduleExist(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID) (bool, error)
 	IsCustomerHasLoan(ctx context.Context, customerID uuid.UUID, loanID uuid.UUID) (bool, error)
-	UpdatePaymentScheduleStatus(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID, status enum.PaymentStatus) (*domain.Payment, error)
+	UpdatePaymentScheduleStatus(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID, status enum.PaymentStatus) (*domain.PaymentSchedule, error)
 
 	CreateLoan(ctx context.Context, loan domain.Loan) (domain.Loan, error)
 }
@@ -47,11 +47,11 @@ func (i impl) IsCustomerHasLoan(ctx context.Context, customerID uuid.UUID, loanI
 	return count > 0, nil
 }
 
-func (i impl) UpdatePaymentScheduleStatus(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID, status enum.PaymentStatus) (*domain.Payment, error) {
-	var payment domain.Payment
+func (i impl) UpdatePaymentScheduleStatus(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID, status enum.PaymentStatus) (*domain.PaymentSchedule, error) {
+	var payment domain.PaymentSchedule
 
 	// Retrieve the payment schedule record
-	err := i.db.WithContext(ctx).Model(&domain.Payment{}).
+	err := i.db.WithContext(ctx).Model(&domain.PaymentSchedule{}).
 		Where("loan_id = ? AND schedule_id = ?", loanID, scheduleID).
 		First(&payment).Error
 
