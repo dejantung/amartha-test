@@ -289,10 +289,12 @@ func (b BillingService) MapScheduleResponse(schedule []domain.Schedule) []model.
 	return scheduleResp
 }
 
-func NewBillingService(repo repository.BillingRepositoryProvider, cache repository.BillingCacheProvider, log logger.Logger) *BillingService {
+func NewBillingService(repo repository.BillingRepositoryProvider,
+	cache repository.BillingCacheProvider, producer producer.ProducerProvider, log logger.Logger) *BillingService {
 	return &BillingService{
-		repo:  repo,
-		log:   log,
-		cache: cache,
+		repo:     repo,
+		log:      log,
+		cache:    cache,
+		producer: producer,
 	}
 }
