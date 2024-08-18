@@ -4,19 +4,19 @@ AppServer:
   ServiceVersion: "1.0.0"
 
 Database:
-  Host: "localhost"
+  Host: "postgres"
   Port: 5432
   Name: "payment"
   User: "postgres"
   Password: "AdminPassword123"
 
 Cache:
-  Host: "localhost"
+  Host: "redis"
   Port: 6379
   Database: 1
 
 Kafka:
-  Broker: "localhost:9092"
+  Broker: "kafka:9092"
   LoanTopic: "loan-topic"
   PaymentTopic: "payment-topic"
   Timeout: 10
