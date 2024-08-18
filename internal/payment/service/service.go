@@ -92,9 +92,8 @@ func (i impl) ProcessLoanEvent(ctx context.Context, payloads model.LoanCreatedPa
 		CustomerID: payloads.CustomerID,
 	}
 
-	var schedule []domain.PaymentSchedule
 	for _, val := range payloads.Schedules {
-		schedule = append(schedule, domain.PaymentSchedule{
+		newLoan.PaymentSchedules = append(newLoan.PaymentSchedules, domain.PaymentSchedule{
 			ScheduleID:     val.ScheduleID,
 			LoanID:         payloads.LoanID,
 			PaymentNo:      val.PaymentNo,
