@@ -25,7 +25,7 @@ type impl struct {
 func (i impl) IsLoanScheduleExist(ctx context.Context, loanID uuid.UUID, scheduleID uuid.UUID) (bool, error) {
 	var count int64
 	err := i.db.WithContext(ctx).Model(&domain.PaymentSchedule{}).
-		Where("loan_id = ? AND schedule_id = ?", loanID, scheduleID).
+		Where("loan_id = ? AND schedule_id = ? AND payment_status = ?", loanID, scheduleID, enum.PaymentStatusPending).
 		Count(&count).Error
 
 	if err != nil {
