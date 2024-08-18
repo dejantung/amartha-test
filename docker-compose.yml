@@ -78,6 +78,50 @@ services:
     environment:
       POSTGRES_PASSWORD: AdminPassword123
 
+  billing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.billing-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - loki
+      - grafana
+      - prometheus
+      - db_init
+
+  billing-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.billing-consumer
+    depends_on:
+      - billing-api
+
+  payment-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.payment-api
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - loki
+      - grafana
+      - prometheus
+      - db_init
+
+  payment-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.payment-consumer
+    depends_on:
+      - payment-api
+
 volumes:
   postgres_data:
   redis_data:
