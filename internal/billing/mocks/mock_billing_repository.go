@@ -116,6 +116,21 @@ func (mr *MockBillingRepositoryProviderMockRecorder) GetLoanByIDAndCustomerID(ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLoanByIDAndCustomerID", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetLoanByIDAndCustomerID), arg0, arg1, arg2)
 }
 
+// GetLoanByScheduleID mocks base method.
+func (m *MockBillingRepositoryProvider) GetLoanByScheduleID(arg0 context.Context, arg1 uuid.UUID) (*domain.Loan, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLoanByScheduleID", arg0, arg1)
+	ret0, _ := ret[0].(*domain.Loan)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLoanByScheduleID indicates an expected call of GetLoanByScheduleID.
+func (mr *MockBillingRepositoryProviderMockRecorder) GetLoanByScheduleID(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLoanByScheduleID", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetLoanByScheduleID), arg0, arg1)
+}
+
 // GetSchedule mocks base method.
 func (m *MockBillingRepositoryProvider) GetSchedule(arg0 context.Context, arg1, arg2 uuid.UUID) ([]domain.Schedule, error) {
 	m.ctrl.T.Helper()
@@ -174,4 +189,18 @@ func (m *MockBillingRepositoryProvider) LastActiveLoan(arg0 context.Context, arg
 func (mr *MockBillingRepositoryProviderMockRecorder) LastActiveLoan(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LastActiveLoan", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).LastActiveLoan), arg0, arg1)
+}
+
+// UpdateSchedulePayment mocks base method.
+func (m *MockBillingRepositoryProvider) UpdateSchedulePayment(arg0 context.Context, arg1 *domain.Schedule) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSchedulePayment", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateSchedulePayment indicates an expected call of UpdateSchedulePayment.
+func (mr *MockBillingRepositoryProviderMockRecorder) UpdateSchedulePayment(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSchedulePayment", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).UpdateSchedulePayment), arg0, arg1)
 }
