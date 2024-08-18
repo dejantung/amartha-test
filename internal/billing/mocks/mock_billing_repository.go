@@ -160,3 +160,18 @@ func (mr *MockBillingRepositoryProviderMockRecorder) GetUnpaidAndMissPaymentUnti
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnpaidAndMissPaymentUntil", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetUnpaidAndMissPaymentUntil), arg0, arg1, arg2)
 }
+
+// LastActiveLoan mocks base method.
+func (m *MockBillingRepositoryProvider) LastActiveLoan(arg0 context.Context, arg1 uuid.UUID) (*domain.Loan, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LastActiveLoan", arg0, arg1)
+	ret0, _ := ret[0].(*domain.Loan)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LastActiveLoan indicates an expected call of LastActiveLoan.
+func (mr *MockBillingRepositoryProviderMockRecorder) LastActiveLoan(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LastActiveLoan", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).LastActiveLoan), arg0, arg1)
+}
