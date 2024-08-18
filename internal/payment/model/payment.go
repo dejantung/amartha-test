@@ -17,7 +17,7 @@ type ProcessPaymentResponse struct {
 	AmountPaid    float64            `json:"amount_paid"`
 	PaymentID     uuid.UUID          `json:"payment_id"`
 	PaymentStatus enum.PaymentStatus `json:"payment_status"`
-	PaymentDate   string             `json:"payment_date"`
+	PaymentDate   time.Time          `json:"payment_date"`
 }
 
 type PaymentEventPayload struct {
