@@ -71,21 +71,6 @@ func (mr *MockBillingRepositoryProviderMockRecorder) CreateLoan(arg0, arg1 any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLoan", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).CreateLoan), arg0, arg1)
 }
 
-// GetAllSchedule mocks base method.
-func (m *MockBillingRepositoryProvider) GetAllSchedule(arg0 context.Context, arg1 uuid.UUID) ([]domain.Schedule, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllSchedule", arg0, arg1)
-	ret0, _ := ret[0].([]domain.Schedule)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAllSchedule indicates an expected call of GetAllSchedule.
-func (mr *MockBillingRepositoryProviderMockRecorder) GetAllSchedule(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllSchedule", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetAllSchedule), arg0, arg1)
-}
-
 // GetCustomer mocks base method.
 func (m *MockBillingRepositoryProvider) GetCustomer(arg0 context.Context) ([]domain.Customer, error) {
 	m.ctrl.T.Helper()
