@@ -13,7 +13,7 @@ type BillingCacheProvider interface {
 }
 
 type redisCache struct {
-	client redis.Client
+	client *redis.Client
 	log    logger.Logger
 }
 
@@ -44,7 +44,7 @@ func (r redisCache) Get(ctx context.Context, key string) (interface{}, error) {
 	return val, nil
 }
 
-func NewBillingCacheProvider(client redis.Client) BillingCacheProvider {
+func NewBillingCacheProvider(client *redis.Client) BillingCacheProvider {
 	return &redisCache{
 		client: client,
 	}
