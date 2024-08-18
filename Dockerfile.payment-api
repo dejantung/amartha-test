@@ -23,5 +23,5 @@ WORKDIR /root/
 COPY --from=builder /app/bin/payment-api .
 COPY ./config-file ./config-file
 
-EXPOSE 8080
+EXPOSE 8081
 CMD ["./payment-api"]
