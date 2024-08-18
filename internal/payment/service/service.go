@@ -48,9 +48,24 @@ func (i impl) ProcessPayment(ctx context.Context, payload model.ProcessPaymentPa
 		return model.ProcessPaymentResponse{}, apperror.New(apperror.NotFound, "loan schedule does not exist")
 	}
 
-	payment, err := i.repo.UpdatePaymentScheduleStatus(ctx, payload.LoanID, payload.ScheduleID, enum.PaymentStatusPaid)
+	paymentSchedule, err := i.repo.UpdatePaymentScheduleStatus(ctx, payload.LoanID, payload.ScheduleID, enum.PaymentStatusPaid)
 	if err != nil {
 		i.log.WithField("error", err).Error("[ProcessPayment] failed to update payment schedule status")
+		return model.ProcessPaymentResponse{}, err
+	}
+
+	newPayment := domain.Payment{
+		LoanID:        payload.LoanID,
+		ScheduleID:    payload.ScheduleID,
+		PaymentDate:   paymentSchedule.PaymentDueDate,
+		AmountPaid:    paymentSchedule.PaymentAmount,
+		PaymentMethod: "Virtual Account",
+		PaymentStatus: enum.PaymentStatusPaid,
+	}
+
+	payment, err := i.repo.CreatePayment(ctx, newPayment)
+	if err != nil {
+		i.log.WithField("error", err).Error("[ProcessPayment] failed to create payment")
 		return model.ProcessPaymentResponse{}, err
 	}
 
