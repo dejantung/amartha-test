@@ -1,16 +1,20 @@
 package service_test
 
 import (
+	"billing-engine/internal/payment/domain"
 	"billing-engine/internal/payment/mocks"
 	"billing-engine/internal/payment/model"
 	"billing-engine/pkg/logger"
 	pkgMock "billing-engine/pkg/mocks"
+	"errors"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 
 	"billing-engine/internal/payment/service"
 )
+
+var someErr = errors.New("some error")
 
 var _ = Describe("Service", func() {
 	var (
@@ -31,12 +35,13 @@ var _ = Describe("Service", func() {
 
 	Describe("ProcessPayment", func() {
 		payload := model.ProcessPaymentPayload{}
+		mockPayment := &domain.Payment{}
 
 		Describe("Positive Case", func() {
 			It("when payment is successful", func() {
 				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
 				repo.EXPECT().IsLoanScheduleExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(mockPayment, nil)
 				producer.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Return(nil)
 
 				_, err := svc.ProcessPayment(nil, payload)
@@ -63,21 +68,54 @@ var _ = Describe("Service", func() {
 			It("when update payment schedule status failed", func() {
 				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
 				repo.EXPECT().IsLoanScheduleExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, someErr)
+
+				_, err := svc.ProcessPayment(nil, payload)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("when sending message to kafka failed", func() {
+				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+				repo.EXPECT().IsLoanScheduleExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(mockPayment, nil)
 				producer.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Return(nil)
 
 				_, err := svc.ProcessPayment(nil, payload)
 				Expect(err).To(BeNil())
 			})
 
-			It("when sending message to kafka failed", func() {
-				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				repo.EXPECT().IsLoanScheduleExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
-				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
-				producer.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Return(nil)
+			It("when error getting customer loan", func() {
+				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, someErr)
 
 				_, err := svc.ProcessPayment(nil, payload)
-				Expect(err).To(BeNil())
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("when error getting loan schedule", func() {
+				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+				repo.EXPECT().IsLoanScheduleExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(false, someErr)
+
+				_, err := svc.ProcessPayment(nil, payload)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("when error updating payment schedule status", func() {
+				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+				repo.EXPECT().IsLoanScheduleExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, someErr)
+
+				_, err := svc.ProcessPayment(nil, payload)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("when sending message to producer failed", func() {
+				repo.EXPECT().IsCustomerHasLoan(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+				repo.EXPECT().IsLoanScheduleExist(gomock.Any(), gomock.Any(), gomock.Any()).Return(true, nil)
+				repo.EXPECT().UpdatePaymentScheduleStatus(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(mockPayment, nil)
+				producer.EXPECT().SendMessage(gomock.Any(), gomock.Any()).Return(someErr)
+
+				_, err := svc.ProcessPayment(nil, payload)
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
