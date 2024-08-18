@@ -13,6 +13,7 @@ import (
 	domain "billing-engine/internal/billing/domain"
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
@@ -115,21 +116,6 @@ func (mr *MockBillingRepositoryProviderMockRecorder) GetCustomerByID(arg0, arg1 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCustomerByID", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetCustomerByID), arg0, arg1)
 }
 
-// GetLatestLoan mocks base method.
-func (m *MockBillingRepositoryProvider) GetLatestLoan(arg0 context.Context, arg1 uuid.UUID) (*domain.Loan, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLatestLoan", arg0, arg1)
-	ret0, _ := ret[0].(*domain.Loan)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetLatestLoan indicates an expected call of GetLatestLoan.
-func (mr *MockBillingRepositoryProviderMockRecorder) GetLatestLoan(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestLoan", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetLatestLoan), arg0, arg1)
-}
-
 // GetLoanByIDAndCustomerID mocks base method.
 func (m *MockBillingRepositoryProvider) GetLoanByIDAndCustomerID(arg0 context.Context, arg1, arg2 uuid.UUID) (*domain.Loan, error) {
 	m.ctrl.T.Helper()
@@ -158,4 +144,34 @@ func (m *MockBillingRepositoryProvider) GetSchedule(arg0 context.Context, arg1, 
 func (mr *MockBillingRepositoryProviderMockRecorder) GetSchedule(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSchedule", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetSchedule), arg0, arg1, arg2)
+}
+
+// GetTotalUnpaidPaymentOnActiveLoan mocks base method.
+func (m *MockBillingRepositoryProvider) GetTotalUnpaidPaymentOnActiveLoan(arg0 context.Context, arg1 uuid.UUID) (float64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTotalUnpaidPaymentOnActiveLoan", arg0, arg1)
+	ret0, _ := ret[0].(float64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetTotalUnpaidPaymentOnActiveLoan indicates an expected call of GetTotalUnpaidPaymentOnActiveLoan.
+func (mr *MockBillingRepositoryProviderMockRecorder) GetTotalUnpaidPaymentOnActiveLoan(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTotalUnpaidPaymentOnActiveLoan", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetTotalUnpaidPaymentOnActiveLoan), arg0, arg1)
+}
+
+// GetUnpaidAndMissPaymentUntil mocks base method.
+func (m *MockBillingRepositoryProvider) GetUnpaidAndMissPaymentUntil(arg0 context.Context, arg1 uuid.UUID, arg2 time.Time) ([]domain.Schedule, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnpaidAndMissPaymentUntil", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]domain.Schedule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnpaidAndMissPaymentUntil indicates an expected call of GetUnpaidAndMissPaymentUntil.
+func (mr *MockBillingRepositoryProviderMockRecorder) GetUnpaidAndMissPaymentUntil(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnpaidAndMissPaymentUntil", reflect.TypeOf((*MockBillingRepositoryProvider)(nil).GetUnpaidAndMissPaymentUntil), arg0, arg1, arg2)
 }
