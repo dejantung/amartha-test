@@ -28,8 +28,9 @@ type BillingServiceProvider interface {
 }
 
 type BillingService struct {
-	repo repository.BillingRepositoryProvider
-	log  logger.Logger
+	repo  repository.BillingRepositoryProvider
+	log   logger.Logger
+	cache repository.BillingCacheProvider
 }
 
 func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoanPayload) (*model.CreateLoanResponse, error) {
@@ -183,9 +184,10 @@ func (b BillingService) MapScheduleResponse(schedule []domain.Schedule) []model.
 	return scheduleResp
 }
 
-func NewBillingService(repo repository.BillingRepositoryProvider, log logger.Logger) *BillingService {
+func NewBillingService(repo repository.BillingRepositoryProvider, cache repository.BillingCacheProvider, log logger.Logger) *BillingService {
 	return &BillingService{
-		repo: repo,
-		log:  log,
+		repo:  repo,
+		log:   log,
+		cache: cache,
 	}
 }
