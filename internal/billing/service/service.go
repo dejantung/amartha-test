@@ -10,6 +10,7 @@ import (
 	"billing-engine/pkg/logger"
 	"billing-engine/pkg/producer"
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
@@ -157,7 +158,14 @@ func (b BillingService) IsCustomerDelinquency(ctx context.Context, customerID uu
 
 	if cacheData != nil {
 		b.log.WithField("customer_id", customerID).Info("[IsCustomerDelinquency] customer found in cache")
-		return cacheData.(*model.IsDelinquentResponse), nil
+		err = json.Unmarshal([]byte(cacheData.(string)), resp)
+		if err != nil {
+			b.log.WithField("customer_id", customerID).
+				WithField("error", err.Error()).Error("[IsCustomerDelinquency - Cache Unmarshal] Unexpected error when unmarshal cache")
+			return nil, err
+		}
+
+		return resp, nil
 	}
 
 	defer func() {
@@ -210,6 +218,7 @@ func (b BillingService) IsCustomerDelinquency(ctx context.Context, customerID uu
 
 func (b BillingService) GetOutstandingBalance(ctx context.Context, customerID uuid.UUID) (*model.GetOutstandingBalanceResponse, error) {
 	b.log.WithField("customer_id", customerID).Info("[GetOutstandingBalance] getting outstanding balance for customer")
+	var resp model.GetOutstandingBalanceResponse
 
 	cacheKey := fmt.Sprintf(constant.CACHE_KEY_OUTSTANDING, customerID)
 	cacheData, err := b.cache.Get(ctx, cacheKey)
@@ -220,11 +229,17 @@ func (b BillingService) GetOutstandingBalance(ctx context.Context, customerID uu
 	}
 
 	if cacheData != nil {
+		err = json.Unmarshal([]byte(cacheData.(string)), &resp)
+		if err != nil {
+			b.log.WithField("customer_id", customerID).
+				WithField("error", err.Error()).Error("[GetOutstandingBalance - Cache Unmarshal] Unexpected error when unmarshal cache")
+			return nil, err
+		}
+
 		b.log.WithField("customer_id", customerID).Info("[GetOutstandingBalance] customer found in cache")
-		return cacheData.(*model.GetOutstandingBalanceResponse), nil
+		return &resp, nil
 	}
 
-	var resp model.GetOutstandingBalanceResponse
 	customer, err := b.repo.GetCustomerByID(ctx, customerID)
 	if err != nil {
 		b.log.WithField("customer_id", customerID).
@@ -237,7 +252,14 @@ func (b BillingService) GetOutstandingBalance(ctx context.Context, customerID uu
 		return nil, apperror.New(apperror.NotFound, "customer not found")
 	}
 
-	totalOutstandingBalance, err := b.repo.GetTotalUnpaidPaymentOnActiveLoan(ctx, customerID)
+	lastActiveLoan, err := b.repo.LastActiveLoan(ctx, customerID)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetLatestActiveLoan] Unexpected error when getting loan")
+		return nil, err
+	}
+
+	totalOutstandingBalance, err := b.repo.GetTotalUnpaidPaymentOnActiveLoan(ctx, lastActiveLoan.LoanID)
 	if err != nil {
 		b.log.WithField("customer_id", customerID).
 			WithField("error", err.Error()).Error("[GetTotalOutstandingBalance] Unexpected error when getting total outstanding balance")
