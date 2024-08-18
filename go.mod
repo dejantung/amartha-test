@@ -18,11 +18,14 @@ require (
 	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/onsi/ginkgo/v2 v2.20.0 // indirect
 	github.com/onsi/gomega v1.34.1 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
 	github.com/redis/go-redis/v9 v9.6.1 // indirect
+	github.com/segmentio/kafka-go v0.4.47 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
