@@ -98,10 +98,7 @@ var _ = Describe("Service", func() {
 			InterestRate:    0.1,
 			StartDate:       timeNow,
 			EndDate:         timeNow.AddDate(0, 5, 0),
-			Customer: domain.Customer{
-				CustomerID: uuid.New(),
-			},
-			AuditLog: domain.AuditLog{},
+			AuditLog:        domain.AuditLog{},
 		}
 	})
 
@@ -374,6 +371,9 @@ var _ = Describe("Service", func() {
 				repo.EXPECT().GetCustomerByID(ctx, customerID).Return(&domain.Customer{}, nil)
 				repo.EXPECT().GetTotalUnpaidPaymentOnActiveLoan(ctx, customerID).Return(totalUnpaid, nil)
 				cache.EXPECT().Set(ctx, gomock.Any(), gomock.Any()).Return(nil)
+				repo.EXPECT().LastActiveLoan(ctx, customerID).Return(&domain.Loan{
+					LoanID: customerID,
+				}, nil)
 
 				response, err := svc.GetOutstandingBalance(ctx, customerID)
 				Expect(err).To(BeNil())
@@ -383,11 +383,9 @@ var _ = Describe("Service", func() {
 			It("should return correct total unpaid payment with cache", func() {
 				customerID := uuid.New()
 				totalUnpaid := 5000000.0
-				cacheRes := model.GetOutstandingBalanceResponse{
-					OutstandingBalance: totalUnpaid,
-				}
+				cacheRes := "{\"outstanding_balance\":5000000}"
 
-				cache.EXPECT().Get(ctx, gomock.Any()).Return(&cacheRes, nil)
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(cacheRes, nil)
 
 				response, err := svc.GetOutstandingBalance(ctx, customerID)
 				Expect(err).To(BeNil())
@@ -417,6 +415,21 @@ var _ = Describe("Service", func() {
 				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
 				repo.EXPECT().GetCustomerByID(ctx, customerID).Return(&domain.Customer{}, nil)
 				repo.EXPECT().GetTotalUnpaidPaymentOnActiveLoan(ctx, customerID).Return(float64(0), someErr)
+				repo.EXPECT().LastActiveLoan(ctx, customerID).Return(&domain.Loan{
+					LoanID: customerID,
+				}, nil)
+
+				_, err := svc.GetOutstandingBalance(ctx, customerID)
+				Expect(err).To(Equal(someErr))
+			})
+
+			It("when error getting last active loan", func() {
+				customerID := uuid.New()
+
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				repo.EXPECT().GetCustomerByID(ctx, customerID).Return(&domain.Customer{}, nil)
+				repo.EXPECT().LastActiveLoan(ctx, customerID).Return(nil, someErr)
+
 				_, err := svc.GetOutstandingBalance(ctx, customerID)
 				Expect(err).To(Equal(someErr))
 			})
