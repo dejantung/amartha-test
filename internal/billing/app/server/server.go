@@ -8,13 +8,19 @@ import (
 	"billing-engine/pkg/database"
 	"billing-engine/pkg/logger"
 	"billing-engine/pkg/producer"
+	"context"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/redis/go-redis/v9"
+	"os"
+	"os/signal"
+	"time"
 )
 
 type Server struct {
 	Echo *echo.Echo
+	Log  logger.Logger
 }
 
 type CustomValidator struct {
@@ -25,13 +31,7 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
 
-func NewServer() (*Server, error) {
-	cfg, err := config.NewConfig("billing")
-	if err != nil {
-		return nil, err
-	}
-
-	log := logger.NewZeroLogger("billing")
+func NewServer(log logger.Logger, cfg *config.Config) (*Server, error) {
 	gorm, err := database.NewGormConnection(cfg)
 	if err != nil {
 		return nil, err
@@ -63,9 +63,28 @@ func NewServer() (*Server, error) {
 		return c.String(200, "OK")
 	})
 
+	e.Use(middleware.Recover())
 	billingHandler.AddRoutes(e)
 
 	return &Server{
 		Echo: e,
+		Log:  log,
 	}, nil
+}
+
+func (s *Server) Stop() {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+
+	<-quit
+	s.Log.Info("Shutting down server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := s.Echo.Shutdown(ctx); err != nil {
+		s.Echo.Logger.Fatal(err)
+	}
+
+	s.Log.Info("Server shutdown gracefully")
 }
