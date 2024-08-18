@@ -9,6 +9,7 @@ import (
 	"billing-engine/pkg/enum"
 	"billing-engine/pkg/logger"
 	"context"
+	"fmt"
 	"github.com/google/uuid"
 	"math"
 	"strconv"
@@ -126,8 +127,68 @@ func (b BillingService) GetPaymentSchedule(ctx context.Context, request model.Ge
 }
 
 func (b BillingService) IsCustomerDelinquency(ctx context.Context, customerID uuid.UUID) (*model.IsDelinquentResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	b.log.WithField("customer_id", customerID).Info("[IsCustomerDelinquency] checking customer in cache")
+	resp := &model.IsDelinquentResponse{}
+
+	cacheKey := fmt.Sprintf(constant.CACHE_KEY_DELIQUENCY, customerID)
+	cacheData, err := b.cache.Get(ctx, cacheKey)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[IsCustomerDelinquency - Cache Get] Unexpected error when getting cache")
+		return nil, err
+	}
+
+	if cacheData != nil {
+		b.log.WithField("customer_id", customerID).Info("[IsCustomerDelinquency] customer found in cache")
+		return cacheData.(*model.IsDelinquentResponse), nil
+	}
+
+	defer func() {
+		if err == nil {
+			cacheErr := b.cache.Set(ctx, cacheKey, resp)
+			if cacheErr != nil {
+				b.log.WithField("customer_id", customerID).
+					WithField("error", cacheErr.Error()).Error("[IsCustomerDelinquency - Cache Set] Unexpected error when setting cache")
+				err = cacheErr
+			}
+		}
+	}()
+
+	customer, err := b.repo.GetCustomerByID(ctx, customerID)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetCustomerByID] Unexpected error when getting customer")
+		return nil, err
+	}
+
+	if customer == nil {
+		b.log.WithField("customer_id", customerID).Info("[IsCustomerDelinquency] customer not found")
+		return nil, apperror.New(apperror.NotFound, "customer not found")
+	}
+
+	// we only get the unpaid and miss payment until now
+	loanSchedule, err := b.repo.GetUnpaidAndMissPaymentUntil(ctx, customerID, time.Now())
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetLatestActiveLoan] Unexpected error when getting loan")
+		return nil, err
+	}
+
+	if loanSchedule == nil || len(loanSchedule) < 2 {
+		return resp, nil
+	}
+
+	// since we only get the unpaid and miss payment until now, we can assume that the loan schedule is sorted,
+	// so we can just check the difference between the payment number
+	// if the difference is 1 then the customer is delinquent
+	for i := 0; i < len(loanSchedule)-1; i++ {
+		if loanSchedule[i+1].PaymentNo-loanSchedule[i].PaymentNo == 1 {
+			resp.IsDelinquent = true
+			break
+		}
+	}
+
+	return resp, err
 }
 
 func (b BillingService) GetOutstandingBalance(ctx context.Context, customerID uuid.UUID) (*model.GetOutstandingBalanceResponse, error) {
