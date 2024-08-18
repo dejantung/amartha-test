@@ -8,6 +8,7 @@ import (
 	apperror "billing-engine/pkg/customerror"
 	"billing-engine/pkg/enum"
 	"billing-engine/pkg/logger"
+	"billing-engine/pkg/producer"
 	"context"
 	"fmt"
 	"github.com/google/uuid"
@@ -29,9 +30,10 @@ type BillingServiceProvider interface {
 }
 
 type BillingService struct {
-	repo  repository.BillingRepositoryProvider
-	log   logger.Logger
-	cache repository.BillingCacheProvider
+	repo     repository.BillingRepositoryProvider
+	log      logger.Logger
+	cache    repository.BillingCacheProvider
+	producer producer.ProducerProvider
 }
 
 func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoanPayload) (*model.CreateLoanResponse, error) {
@@ -69,7 +71,7 @@ func (b BillingService) CreateLoan(ctx context.Context, payload model.CreateLoan
 		return nil, err
 	}
 
-	//TODO: add kafka producer here
+	//TODO: add producer producer here
 	b.log.WithField("customer_id", payload.CustomerID).
 		WithField("loan", loan).Info("[CreateLoan] loan created successfully")
 
