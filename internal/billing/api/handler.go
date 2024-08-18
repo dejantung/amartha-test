@@ -26,3 +26,23 @@ func (s *AppServer) CreateLoanHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
 }
+
+func (s *AppServer) GetPaymentScheduleHandler(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	payload := model.GetSchedulePayload{}
+	if err := c.Bind(&payload); err != nil {
+		return err
+	}
+
+	if err := c.Validate(payload); err != nil {
+		return err
+	}
+
+	result, err := s.BillingService.GetPaymentSchedule(ctx, payload)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, response.NewSuccessResponse(result))
+}
