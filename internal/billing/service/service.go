@@ -11,9 +11,9 @@ import (
 	"billing-engine/pkg/producer"
 	"context"
 	"fmt"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"math"
-	"strconv"
 	"time"
 )
 
@@ -259,9 +259,9 @@ func (b BillingService) CreateCustomer(ctx context.Context, payload model.Create
 	var customers []domain.Customer
 	for i := 0; i < payload.TotalCustomer; i++ {
 		customer := domain.Customer{
-			FirstName: "John",
-			LastName:  "Doe" + strconv.Itoa(i),
-			Email:     "john.doe" + strconv.Itoa(i) + "@example.com",
+			FirstName: gofakeit.FirstName(),
+			LastName:  gofakeit.LastName(),
+			Email:     gofakeit.Email(),
 		}
 
 		customers = append(customers, customer)
