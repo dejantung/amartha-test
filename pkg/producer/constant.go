@@ -2,4 +2,5 @@ package producer
 
 const (
 	EVENT_NAME_LOAN_CREATED = "LOAN_CREATED"
+	EVENT_NAME_PAYMENT_PAID = "PAYMENT_PAID"
 )
