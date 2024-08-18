@@ -21,7 +21,7 @@ func main() {
 	}
 
 	go func() {
-		if err := newApiServer.Echo.Start(cfg.AppServer.Port); err != nil {
+		if err := newApiServer.Echo.Start(":" + cfg.AppServer.Port); err != nil {
 			log.WithField("error", err).Error("failed to start server")
 		}
 	}()
