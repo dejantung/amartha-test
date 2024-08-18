@@ -2,6 +2,7 @@ package server
 
 import (
 	"billing-engine/internal/billing/api"
+	"billing-engine/internal/billing/domain"
 	"billing-engine/internal/billing/repository"
 	"billing-engine/internal/billing/service"
 	"billing-engine/pkg/config"
@@ -37,6 +38,11 @@ func NewServer(log logger.Logger, cfg *config.Config) (*Server, error) {
 		return nil, err
 	}
 
+	err = gorm.AutoMigrate(&domain.Customer{}, &domain.Loan{}, &domain.Schedule{})
+	if err != nil {
+		return nil, err
+	}
+
 	redisClient := redis.NewClient(&redis.Options{
 		Addr: cfg.Cache.Host,
 		DB:   cfg.Cache.Database,
@@ -64,7 +70,9 @@ func NewServer(log logger.Logger, cfg *config.Config) (*Server, error) {
 	})
 
 	e.Use(middleware.Recover())
+	e.Use(middleware.Logger())
 	billingHandler.AddRoutes(e)
+	e.Validator = &CustomValidator{validator: validator.New()}
 
 	return &Server{
 		Echo: e,
