@@ -4,6 +4,7 @@ import (
 	"billing-engine/internal/payment/model"
 	"billing-engine/internal/payment/repository"
 	"billing-engine/pkg/logger"
+	"billing-engine/pkg/producer"
 	"context"
 )
 
@@ -13,8 +14,9 @@ type PaymentServiceProvider interface {
 }
 
 type impl struct {
-	repo repository.PaymentRepositoryProvider
-	log  logger.Logger
+	repo     repository.PaymentRepositoryProvider
+	producer producer.ProducerProvider
+	log      logger.Logger
 }
 
 func (i impl) ProcessPayment(ctx context.Context, payload model.ProcessPaymentPayload) (model.ProcessPaymentResponse, error) {
@@ -27,9 +29,11 @@ func (i impl) ProcessLoanEvent(ctx context.Context, payloads model.LoanCreatedPa
 	panic("implement me")
 }
 
-func NewPaymentService(repo repository.PaymentRepositoryProvider, log logger.Logger) PaymentServiceProvider {
+func NewPaymentService(repo repository.PaymentRepositoryProvider,
+	producer producer.ProducerProvider, log logger.Logger) PaymentServiceProvider {
 	return &impl{
-		repo: repo,
-		log:  log,
+		repo:     repo,
+		log:      log,
+		producer: producer,
 	}
 }
