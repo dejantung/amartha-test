@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"billing-engine/pkg/enum"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
@@ -8,12 +9,12 @@ import (
 
 type PaymentSchedule struct {
 	Base
-	ScheduleID     uuid.UUID `json:"schedule_id" gorm:"type:uuid;primaryKey"`
-	LoanID         uuid.UUID `json:"loan_id" gorm:"type:uuid"`
-	PaymentNo      int       `json:"payment_no"`
-	PaymentDueDate time.Time `json:"payment_due_date"`
-	PaymentAmount  float64   `json:"payment_amount"`
-	PaymentStatus  string    `json:"payment_status"`
+	ScheduleID     uuid.UUID          `json:"schedule_id" gorm:"type:uuid;primaryKey"`
+	LoanID         uuid.UUID          `json:"loan_id" gorm:"type:uuid"`
+	PaymentNo      int                `json:"payment_no"`
+	PaymentDueDate time.Time          `json:"payment_due_date"`
+	PaymentAmount  float64            `json:"payment_amount"`
+	PaymentStatus  enum.PaymentStatus `json:"payment_status"`
 
 	Payment Payment `json:"payments" gorm:"foreignKey:ScheduleID"`
 }
