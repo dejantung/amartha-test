@@ -67,6 +67,17 @@ services:
     volumes:
       - ./deploy/prometheus/config.yml:/etc/prometheus/prometheus.yml
 
+  db_init:
+    image: postgres:13
+    depends_on:
+      - postgres
+    entrypoint: >
+      sh -c "export PGPASSWORD=$$POSTGRES_PASSWORD &&
+      psql -h postgres -U postgres -c 'CREATE DATABASE billing;' &&
+      psql -h postgres -U postgres -c 'CREATE DATABASE payment;'"
+    environment:
+      POSTGRES_PASSWORD: AdminPassword123
+
 volumes:
   postgres_data:
   redis_data:
