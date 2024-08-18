@@ -17,7 +17,8 @@ type BillingRepositoryProvider interface {
 	GetSchedule(ctx context.Context, loanID, customerID uuid.UUID) ([]domain.Schedule, error)
 	GetUnpaidAndMissPaymentUntil(ctx context.Context, customerID uuid.UUID, date time.Time) ([]domain.Schedule, error)
 	GetLoanByIDAndCustomerID(ctx context.Context, loanID, customerID uuid.UUID) (*domain.Loan, error)
-	GetTotalUnpaidPaymentOnActiveLoan(ctx context.Context, customerID uuid.UUID) (float64, error)
+	GetTotalUnpaidPaymentOnActiveLoan(ctx context.Context, loanId uuid.UUID) (float64, error)
+	LastActiveLoan(ctx context.Context, customerID uuid.UUID) (*domain.Loan, error)
 
 	// CreateCustomer NOTE: this method is out of context, so I will just merge it in the billing service
 	CreateCustomer(ctx context.Context, request []domain.Customer) error
@@ -62,7 +63,7 @@ func (r repo) GetUnpaidAndMissPaymentUntil(ctx context.Context, customerID uuid.
 
 func (r repo) GetLoanByIDAndCustomerID(ctx context.Context, loanID, customerID uuid.UUID) (*domain.Loan, error) {
 	var loan domain.Loan
-	err := r.db.WithContext(ctx).Where("id = ? AND customer_id = ?", loanID, customerID).First(&loan).Error
+	err := r.db.WithContext(ctx).Where("loan_id = ? AND customer_id = ?", loanID, customerID).First(&loan).Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	} else if err != nil {
@@ -72,11 +73,23 @@ func (r repo) GetLoanByIDAndCustomerID(ctx context.Context, loanID, customerID u
 	return &loan, nil
 }
 
-func (r repo) GetTotalUnpaidPaymentOnActiveLoan(ctx context.Context, customerID uuid.UUID) (float64, error) {
+func (r repo) LastActiveLoan(ctx context.Context, customerID uuid.UUID) (*domain.Loan, error) {
+	var loan domain.Loan
+	err := r.db.WithContext(ctx).Where("customer_id = ? AND is_finish = ?", customerID, false).First(&loan).Error
+	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &loan, nil
+}
+
+func (r repo) GetTotalUnpaidPaymentOnActiveLoan(ctx context.Context, loanId uuid.UUID) (float64, error) {
 	var totalUnpaid float64
 	err := r.db.WithContext(ctx).Model(&domain.Schedule{}).
-		Select("SUM(payment)").
-		Where("customer_id = ? AND status = ?", customerID, enum.PaymentStatusPending).
+		Select("SUM(payment_amount)").
+		Where("loan_id = ? AND payment_status = ?", loanId, enum.PaymentStatusPending).
 		Row().
 		Scan(&totalUnpaid)
 	if err != nil {
@@ -103,7 +116,7 @@ func (r repo) GetCustomer(ctx context.Context) ([]domain.Customer, error) {
 
 func (r repo) GetCustomerByID(ctx context.Context, customerID uuid.UUID) (*domain.Customer, error) {
 	var customer domain.Customer
-	err := r.db.WithContext(ctx).Where("id = ?", customerID).First(&customer).Error
+	err := r.db.WithContext(ctx).Where("customer_id = ?", customerID).First(&customer).Error
 	if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	} else if err != nil {
