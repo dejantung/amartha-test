@@ -1,5 +1,5 @@
 AppServer:
-  Port: "8080"
+  Port: "8081"
   ServiceName: "payment-service"
   ServiceVersion: "1.0.0"
 
@@ -7,7 +7,7 @@ Database:
   Host: "localhost"
   Port: 5432
   Name: "payment"
-  User: "root"
+  User: "postgres"
   Password: "AdminPassword123"
 
 Cache:
