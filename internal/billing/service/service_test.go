@@ -350,4 +350,62 @@ var _ = Describe("Service", func() {
 		})
 	})
 
+	Describe("GetOutstandingAmount", func() {
+		Describe("Positive case", func() {
+			It("should return correct total unpaid payment without cache", func() {
+				customerID := uuid.New()
+				totalUnpaid := 5000000.0
+
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				repo.EXPECT().GetCustomerByID(ctx, customerID).Return(&domain.Customer{}, nil)
+				repo.EXPECT().GetTotalUnpaidPaymentOnActiveLoan(ctx, customerID).Return(totalUnpaid, nil)
+				cache.EXPECT().Set(ctx, gomock.Any(), gomock.Any()).Return(nil)
+
+				response, err := svc.GetOutstandingBalance(ctx, customerID)
+				Expect(err).To(BeNil())
+				Expect(response.OutstandingBalance).To(Equal(totalUnpaid))
+			})
+
+			It("should return correct total unpaid payment with cache", func() {
+				customerID := uuid.New()
+				totalUnpaid := 5000000.0
+				cacheRes := model.GetOutstandingBalanceResponse{
+					OutstandingBalance: totalUnpaid,
+				}
+
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(&cacheRes, nil)
+
+				response, err := svc.GetOutstandingBalance(ctx, customerID)
+				Expect(err).To(BeNil())
+				Expect(response.OutstandingBalance).To(Equal(totalUnpaid))
+			})
+
+		})
+
+		Describe("Negative case", func() {
+			It("when error getting cache", func() {
+				customerID := uuid.New()
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, someErr)
+				_, err := svc.GetOutstandingBalance(ctx, customerID)
+				Expect(err).To(Equal(someErr))
+			})
+
+			It("when error getting customer by id", func() {
+				customerID := uuid.New()
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				repo.EXPECT().GetCustomerByID(ctx, customerID).Return(nil, someErr)
+				_, err := svc.GetOutstandingBalance(ctx, customerID)
+				Expect(err).To(Equal(someErr))
+			})
+
+			It("when error getting total unpaid payment on active loan", func() {
+				customerID := uuid.New()
+				cache.EXPECT().Get(ctx, gomock.Any()).Return(nil, nil)
+				repo.EXPECT().GetCustomerByID(ctx, customerID).Return(&domain.Customer{}, nil)
+				repo.EXPECT().GetTotalUnpaidPaymentOnActiveLoan(ctx, customerID).Return(float64(0), someErr)
+				_, err := svc.GetOutstandingBalance(ctx, customerID)
+				Expect(err).To(Equal(someErr))
+			})
+		})
+	})
 })
