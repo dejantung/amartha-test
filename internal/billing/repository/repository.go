@@ -51,9 +51,9 @@ func (r repo) GetSchedule(ctx context.Context, loanID, customerID uuid.UUID) ([]
 	return schedules, nil
 }
 
-func (r repo) GetUnpaidAndMissPaymentUntil(ctx context.Context, customerID uuid.UUID, date time.Time) ([]domain.Schedule, error) {
+func (r repo) GetUnpaidAndMissPaymentUntil(ctx context.Context, loanId uuid.UUID, date time.Time) ([]domain.Schedule, error) {
 	var schedules []domain.Schedule
-	err := r.db.WithContext(ctx).Where("customer_id = ? AND due_date < ? AND status = ?", customerID, date, enum.PaymentStatusPending).Find(&schedules).Error
+	err := r.db.Debug().WithContext(ctx).Where("loan_id = ? AND payment_due_date < ? AND payment_status = ?", loanId, date, enum.PaymentStatusPending).Order("payment_no asc").Find(&schedules).Error
 	if err != nil {
 		return nil, err
 	}
