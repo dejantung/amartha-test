@@ -1,6 +1,7 @@
 package service
 
 import (
+	"billing-engine/internal/payment/domain"
 	"billing-engine/internal/payment/model"
 	"billing-engine/internal/payment/repository"
 	apperror "billing-engine/pkg/customerror"
@@ -82,8 +83,33 @@ func (i impl) ProcessPayment(ctx context.Context, payload model.ProcessPaymentPa
 }
 
 func (i impl) ProcessLoanEvent(ctx context.Context, payloads model.LoanCreatedPayload) error {
-	//TODO implement me
-	panic("implement me")
+	i.log.WithField("payload", payloads).Info("[ProcessLoanEvent] processing loan event")
+
+	newLoan := domain.Loan{
+		LoanID:     payloads.LoanID,
+		CustomerID: payloads.CustomerID,
+	}
+
+	var schedule []domain.PaymentSchedule
+	for _, val := range payloads.Schedules {
+		schedule = append(schedule, domain.PaymentSchedule{
+			ScheduleID:     val.ScheduleID,
+			LoanID:         payloads.LoanID,
+			PaymentNo:      val.PaymentNo,
+			PaymentDueDate: val.PaymentDueDate,
+			PaymentAmount:  val.PaymentAmount,
+			PaymentStatus:  val.PaymentStatus,
+		})
+	}
+
+	_, err := i.repo.CreateLoan(ctx, newLoan)
+	if err != nil {
+		i.log.WithField("error", err).Error("[ProcessLoanEvent] failed to create loan")
+		return err
+	}
+
+	i.log.WithField("payload", payloads).Info("[ProcessLoanEvent] loan event processed")
+	return nil
 }
 
 func NewPaymentService(repo repository.PaymentRepositoryProvider,
