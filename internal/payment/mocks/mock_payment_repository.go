@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	domain "billing-engine/internal/payment/domain"
 	enum "billing-engine/pkg/enum"
 	context "context"
 	reflect "reflect"
@@ -72,11 +73,12 @@ func (mr *MockPaymentRepositoryProviderMockRecorder) IsLoanScheduleExist(arg0, a
 }
 
 // UpdatePaymentScheduleStatus mocks base method.
-func (m *MockPaymentRepositoryProvider) UpdatePaymentScheduleStatus(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 enum.PaymentStatus) error {
+func (m *MockPaymentRepositoryProvider) UpdatePaymentScheduleStatus(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 enum.PaymentStatus) (*domain.Payment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePaymentScheduleStatus", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*domain.Payment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // UpdatePaymentScheduleStatus indicates an expected call of UpdatePaymentScheduleStatus.
