@@ -191,8 +191,15 @@ func (b BillingService) IsCustomerDelinquency(ctx context.Context, customerID uu
 		return nil, apperror.New(apperror.NotFound, "customer not found")
 	}
 
+	latestLoan, err := b.repo.LastActiveLoan(ctx, customerID)
+	if err != nil {
+		b.log.WithField("customer_id", customerID).
+			WithField("error", err.Error()).Error("[GetLatestActiveLoan] Unexpected error when getting loan")
+		return nil, err
+	}
+
 	// we only get the unpaid and miss payment until now
-	loanSchedule, err := b.repo.GetUnpaidAndMissPaymentUntil(ctx, customerID, time.Now())
+	loanSchedule, err := b.repo.GetUnpaidAndMissPaymentUntil(ctx, latestLoan.LoanID, time.Now())
 	if err != nil {
 		b.log.WithField("customer_id", customerID).
 			WithField("error", err.Error()).Error("[GetLatestActiveLoan] Unexpected error when getting loan")
