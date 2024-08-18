@@ -57,6 +57,21 @@ func (mr *MockPaymentRepositoryProviderMockRecorder) CreateLoan(arg0, arg1 any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLoan", reflect.TypeOf((*MockPaymentRepositoryProvider)(nil).CreateLoan), arg0, arg1)
 }
 
+// CreatePayment mocks base method.
+func (m *MockPaymentRepositoryProvider) CreatePayment(arg0 context.Context, arg1 domain.Payment) (domain.Payment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePayment", arg0, arg1)
+	ret0, _ := ret[0].(domain.Payment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreatePayment indicates an expected call of CreatePayment.
+func (mr *MockPaymentRepositoryProviderMockRecorder) CreatePayment(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePayment", reflect.TypeOf((*MockPaymentRepositoryProvider)(nil).CreatePayment), arg0, arg1)
+}
+
 // IsCustomerHasLoan mocks base method.
 func (m *MockPaymentRepositoryProvider) IsCustomerHasLoan(arg0 context.Context, arg1, arg2 uuid.UUID) (bool, error) {
 	m.ctrl.T.Helper()
@@ -88,10 +103,10 @@ func (mr *MockPaymentRepositoryProviderMockRecorder) IsLoanScheduleExist(arg0, a
 }
 
 // UpdatePaymentScheduleStatus mocks base method.
-func (m *MockPaymentRepositoryProvider) UpdatePaymentScheduleStatus(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 enum.PaymentStatus) (*domain.Payment, error) {
+func (m *MockPaymentRepositoryProvider) UpdatePaymentScheduleStatus(arg0 context.Context, arg1, arg2 uuid.UUID, arg3 enum.PaymentStatus) (*domain.PaymentSchedule, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdatePaymentScheduleStatus", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*domain.Payment)
+	ret0, _ := ret[0].(*domain.PaymentSchedule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
