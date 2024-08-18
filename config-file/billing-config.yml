@@ -1,0 +1,22 @@
+AppServer:
+  Port: "8080"
+  ServiceName: "billing-service"
+  ServiceVersion: "1.0.0"
+
+Database:
+  Host: "localhost"
+  Port: 5432
+  Name: "billing"
+  User: "root"
+  Password: "AdminPassword123"
+
+Cache:
+  Host: "localhost"
+  Port: 6379
+  Database: 0
+
+Kafka:
+  Broker: "localhost:9092"
+  LoanTopic: "loan-topic"
+  PaymentTopic: "payment-topic"
+  Timeout: 10
