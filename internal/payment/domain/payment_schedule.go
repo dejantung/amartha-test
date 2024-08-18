@@ -20,6 +20,5 @@ type PaymentSchedule struct {
 }
 
 func (paymentSchedule *PaymentSchedule) BeforeCreate(tx *gorm.DB) (err error) {
-	paymentSchedule.ScheduleID = uuid.New()
 	return paymentSchedule.Base.BeforeCreate(tx)
 }
