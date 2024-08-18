@@ -119,4 +119,27 @@ var _ = Describe("Service", func() {
 			})
 		})
 	})
+
+	Describe("ProcessLoanEvent", func() {
+		payload := model.LoanCreatedPayload{}
+		mockLoan := domain.Loan{}
+
+		Describe("Positive Case", func() {
+			It("when loan event is successfully processed", func() {
+				repo.EXPECT().CreateLoan(gomock.Any(), gomock.Any()).Return(mockLoan, nil)
+
+				err := svc.ProcessLoanEvent(nil, payload)
+				Expect(err).To(BeNil())
+			})
+		})
+
+		Describe("Negative Case", func() {
+			It("when error processing loan event", func() {
+				repo.EXPECT().CreateLoan(gomock.Any(), gomock.Any()).Return(mockLoan, someErr)
+
+				err := svc.ProcessLoanEvent(nil, payload)
+				Expect(err).To(HaveOccurred())
+			})
+		})
+	})
 })
