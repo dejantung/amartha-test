@@ -23,6 +23,7 @@ type BillingServiceProvider interface {
 	GetPaymentSchedule(ctx context.Context, request model.GetSchedulePayload) (*model.GetScheduleResponse, error)
 	IsCustomerDelinquency(ctx context.Context, customerID uuid.UUID) (*model.IsDelinquentResponse, error)
 	GetOutstandingBalance(ctx context.Context, customerID uuid.UUID) (*model.GetOutstandingBalanceResponse, error)
+	ProcessMessage(ctx context.Context, payload []byte) error
 
 	// CreateCustomer NOTE: this method is out of context, so I will just merge it in the billing service
 	CreateCustomer(ctx context.Context, payload model.CreateCustomerPayload) (*model.GetCustomerResponse, error)
@@ -331,6 +332,131 @@ func (b BillingService) MapScheduleResponse(schedule []domain.Schedule) []model.
 	}
 
 	return scheduleResp
+}
+
+func (b BillingService) UpdatePayment(ctx context.Context, payload model.PaymentEventPayload) error {
+	b.log.WithField("schedule_id", payload.ScheduleID).Info("[UpdatePayment] updating payment schedule")
+
+	loan, err := b.repo.GetLoanByScheduleID(ctx, payload.ScheduleID)
+	if err != nil {
+		b.log.WithField("schedule_id", payload.ScheduleID).
+			WithField("error", err.Error()).Error("[UpdatePayment] Unexpected error when getting schedule")
+		return err
+	}
+
+	if loan == nil {
+		b.log.WithField("schedule_id", payload.ScheduleID).Error("[UpdatePayment] loan not found")
+		return apperror.New(apperror.NotFound, "loan not found")
+	}
+
+	schedule, err := b.repo.GetScheduleByID(ctx, payload.ScheduleID)
+	if err != nil {
+		b.log.WithField("schedule_id", payload.ScheduleID).
+			WithField("error", err.Error()).Error("[UpdatePayment] Unexpected error when getting schedule")
+		return err
+	}
+
+	if schedule == nil {
+		b.log.WithField("schedule_id", payload.ScheduleID).Error("[UpdatePayment] schedule not found")
+		return apperror.New(apperror.NotFound, "schedule not found")
+	}
+
+	if schedule.PaymentStatus == enum.PaymentStatusPaid {
+		return nil
+	}
+
+	schedule.PaymentStatus = enum.PaymentStatusPaid
+	err = b.repo.UpdateSchedulePayment(ctx, schedule)
+	if err != nil {
+		b.log.WithField("schedule_id", payload.ScheduleID).
+			WithField("error", err.Error()).Error("[UpdatePayment] Unexpected error when updating schedule")
+		return err
+	}
+
+	err = b.flushCache(ctx, loan.CustomerID)
+	if err != nil {
+		b.log.WithField("schedule_id", payload.ScheduleID).
+			WithField("error", err.Error()).Error("[UpdatePayment] failed to flush cache")
+		return err
+	}
+
+	b.log.WithField("schedule_id", payload.ScheduleID).Info("[UpdatePayment] schedule updated successfully")
+	return nil
+}
+
+func (b BillingService) flushCache(ctx context.Context, customerID uuid.UUID) error {
+	cacheKeyOutstanding := fmt.Sprintf(constant.CACHE_KEY_OUTSTANDING, customerID)
+	currentValue, err := b.cache.Get(ctx, cacheKeyOutstanding)
+	if err != nil {
+		b.log.WithField("error", err.Error()).Error("[removeCache] failed to get cache")
+		return err
+	}
+
+	if currentValue != nil {
+		b.log.WithField("key", cacheKeyOutstanding).Info("[removeCache] key found in cache")
+		err = b.cache.Delete(ctx, cacheKeyOutstanding)
+		if err != nil {
+			b.log.WithField("error", err.Error()).Error("[removeCache] failed to delete key from cache")
+			return err
+		}
+	}
+
+	cacheKeyDelinquency := fmt.Sprintf(constant.CACHE_KEY_DELIQUENCY, customerID)
+	currentValue, err = b.cache.Get(ctx, cacheKeyDelinquency)
+	if err != nil {
+		b.log.WithField("error", err.Error()).Error("[removeCache] failed to get cache")
+		return err
+	}
+
+	if currentValue != nil {
+		b.log.WithField("key", cacheKeyDelinquency).Info("[removeCache] key found in cache")
+		err = b.cache.Delete(ctx, cacheKeyDelinquency)
+		if err != nil {
+			b.log.WithField("error", err.Error()).Error("[removeCache] failed to delete key from cache")
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (b BillingService) ProcessMessage(ctx context.Context, payload []byte) error {
+	b.log.WithField("payload", string(payload)).Info("[ProcessMessage] processing message")
+
+	var message producer.Message
+	err := json.Unmarshal(payload, &message)
+	if err != nil {
+		b.log.WithField("error", err).Error("[ProcessMessage] failed to unmarshal message payload")
+		return err
+	}
+
+	switch message.EventName {
+	case producer.EVENT_NAME_PAYMENT_PAID:
+		var parseData model.PaymentEventPayload
+
+		dataByte, err := json.Marshal(message.Data)
+		if err != nil {
+			b.log.WithField("error", err).Error("[ProcessMessage] failed to marshal message.Data")
+			return err
+		}
+		err = json.Unmarshal(dataByte, &parseData)
+		if err != nil {
+			b.log.WithField("error", err).Error("[ProcessMessage] failed to assert message.Data to model")
+			return err
+		}
+
+		err = b.UpdatePayment(ctx, parseData)
+		if err != nil {
+			b.log.WithField("error", err).Error("[ProcessMessage] failed to process loan event")
+			return err
+		}
+	default:
+		b.log.WithField("event_name", message.EventName).
+			WithField("payload", message).Error("[ProcessMessage] unknown event name")
+	}
+
+	b.log.WithField("payload", string(payload)).Info("[ProcessMessage] message processed")
+	return nil
 }
 
 func NewBillingService(repo repository.BillingRepositoryProvider,
